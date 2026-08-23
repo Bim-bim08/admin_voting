@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — E-Election OSIS</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #f5f5f0;
+      color: #1a1a1a;
+      min-height: 100vh;
+    }
+
+    /* ============================================
+       HEADER
+       ============================================ */
+    .header {
+      background: #1a1a1a;
+      color: #fff;
+      padding: 0 32px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-left .logo {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+
+    .header-left .sep {
+      width: 1px;
+      height: 20px;
+      background: #444;
+    }
+
+    .header-left .subtitle {
+      font-size: 12px;
+      color: #999;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-right .admin-name {
+      font-size: 13px;
+      color: #ccc;
+    }
+
+    .btn-logout {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #999;
+      background: none;
+      border: 1px solid #444;
+      padding: 6px 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-logout:hover {
+      color: #fff;
+      border-color: #fff;
+    }
+
+    /* ============================================
+       LAYOUT
+       ============================================ */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+
+    /* ============================================
+       TABS NAVIGATION
+       ============================================ */
+    .tabs-nav {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid #e0e0d8;
+      margin-bottom: 32px;
+    }
+
+    .tab-btn {
+      padding: 12px 24px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: #888;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab-btn:hover {
+      color: #1a1a1a;
+    }
+
+    .tab-btn.active {
+      color: #1a1a1a;
+      border-bottom-color: #1a1a1a;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* ============================================
+       STAT CARDS
+       ============================================ */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: #fff;
+      border: 1px solid #e0e0d8;
+      padding: 24px;
+    }
+
+    .stat-card .stat-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 12px;
+    }
+
+    .stat-card .stat-value {
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      color: #1a1a1a;
+      line-height: 1;
+    }
+
+    .stat-card .stat-sub {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 8px;
+    }
+
+    /* ============================================
+       BAR CHART
+       ============================================ */
+    .chart-card {
+      background: #fff;
+      border: 1px solid #e0e0d8;
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+
+    .chart-card .card-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 24px;
+    }
+
+    .bar-chart {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .bar-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .bar-label {
+      width: 180px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #1a1a1a;
+      flex-shrink: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .bar-track {
+      flex: 1;
+      height: 28px;
+      background: #f0f0ea;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: #1a1a1a;
+      transition: width 0.6s ease;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 10px;
+      min-width: fit-content;
+    }
+
+    .bar-count {
+      font-size: 12px;
+      font-weight: 600;
+      color: #fff;
+      white-space: nowrap;
+    }
+
+    .bar-count-outside {
+      font-size: 12px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-left: 10px;
+      white-space: nowrap;
+    }
+
+    .bar-number {
+      width: 28px;
+      height: 28px;
+      background: #f0f0ea;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #888;
+      flex-shrink: 0;
+    }
+
+    .chart-empty {
+      text-align: center;
+      padding: 40px;
+      color: #aaa;
+      font-size: 13px;
+    }
+
+    /* ============================================
+       TABLE
+       ============================================ */
+    .table-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .table-header .card-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #888;
+    }
+
+    .btn-primary {
+      padding: 10px 20px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      background: #1a1a1a;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-primary:hover {
+      background: #333;
+    }
+
+    .table-container {
+      background: #fff;
+      border: 1px solid #e0e0d8;
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      padding: 12px 16px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #888;
+      text-align: left;
+      border-bottom: 1px solid #e0e0d8;
+      background: #fafaf7;
+    }
+
+    tbody td {
+      padding: 14px 16px;
+      font-size: 13px;
+      color: #1a1a1a;
+      border-bottom: 1px solid #f0f0ea;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: #fafaf7;
+    }
+
+    .table-empty {
+      text-align: center;
+      padding: 40px 16px;
+      color: #aaa;
+      font-size: 13px;
+    }
+
+    /* ============================================
+       BADGES
+       ============================================ */
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .badge-voted {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .badge-not-voted {
+      background: #fff3e0;
+      color: #e65100;
+    }
+
+    .badge-number {
+      background: #f0f0ea;
+      color: #555;
+    }
+
+    /* ============================================
+       ACTION BUTTONS IN TABLE
+       ============================================ */
+    .action-btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: inherit;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-edit {
+      background: none;
+      border: 1px solid #e0e0d8;
+      color: #555;
+    }
+
+    .btn-edit:hover {
+      border-color: #1a1a1a;
+      color: #1a1a1a;
+    }
+
+    .btn-delete {
+      background: none;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+    }
+
+    .btn-delete:hover {
+      background: #991b1b;
+      border-color: #991b1b;
+      color: #fff;
+    }
+
+    /* ============================================
+       MODAL
+       ============================================ */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal {
+      background: #fff;
+      width: 100%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      border: 1px solid #e0e0d8;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      border-bottom: 1px solid #e0e0d8;
+    }
+
+    .modal-header h2 {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+    }
+
+    .btn-close {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: #888;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-close:hover {
+      color: #1a1a1a;
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 8px;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-family: inherit;
+      border: 1px solid #e0e0d8;
+      background: #fafaf7;
+      color: #1a1a1a;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+      border-color: #1a1a1a;
+    }
+
+    .form-group textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 16px 24px;
+      border-top: 1px solid #e0e0d8;
+    }
+
+    .btn-secondary {
+      padding: 10px 20px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      background: none;
+      border: 1px solid #e0e0d8;
+      color: #555;
+      cursor: pointer;
+    }
+
+    .btn-secondary:hover {
+      border-color: #1a1a1a;
+      color: #1a1a1a;
+    }
+
+    .btn-save {
+      padding: 10px 24px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      background: #1a1a1a;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-save:hover {
+      background: #333;
+    }
+
+    /* ============================================
+       TOAST NOTIFICATION
+       ============================================ */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 14px 24px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #fff;
+      background: #1a1a1a;
+      z-index: 300;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast.success {
+      background: #2e7d32;
+    }
+
+    .toast.error {
+      background: #991b1b;
+    }
+
+    /* ============================================
+       RESPONSIVE
+       ============================================ */
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .bar-label {
+        width: 120px;
+      }
+
+      .tabs-nav {
+        overflow-x: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <span class="logo">E-Election OSIS</span>
+      <span class="sep"></span>
+      <span class="subtitle">Admin Dashboard</span>
+    </div>
+    <div class="header-right">
+      <span class="admin-name" id="adminName"></span>
+      <button class="btn-logout" onclick="logout()">Keluar</button>
+    </div>
+  </div>
+
+  <!-- MAIN CONTAINER -->
+  <div class="container">
+    <!-- TABS NAVIGATION -->
+    <div class="tabs-nav">
+      <button class="tab-btn active" data-tab="overview">Ringkasan</button>
+      <button class="tab-btn" data-tab="candidates">Paslon</button>
+      <button class="tab-btn" data-tab="voters">DPT</button>
+    </div>
+
+    <!-- ============================================
+         TAB: OVERVIEW
+         ============================================ -->
+    <div class="tab-content active" id="tab-overview">
+      <!-- Stats Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Pemilih</div>
+          <div class="stat-value" id="statTotalVoters">—</div>
+          <div class="stat-sub">Daftar Pemilih Tetap</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Sudah Memilih</div>
+          <div class="stat-value" id="statVoted">—</div>
+          <div class="stat-sub" id="statVotedPercent">—%</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Belum Memilih</div>
+          <div class="stat-value" id="statNotVoted">—</div>
+          <div class="stat-sub" id="statNotVotedPercent">—%</div>
+        </div>
+      </div>
+
+      <!-- Bar Chart -->
+      <div class="chart-card">
+        <div class="card-title">Perolehan Suara Per Kandidat</div>
+        <div class="bar-chart" id="barChart">
+          <div class="chart-empty">Memuat data...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================
+         TAB: CANDIDATES
+         ============================================ -->
+    <div class="tab-content" id="tab-candidates">
+      <div class="table-header">
+        <div class="card-title">Manajemen Paslon</div>
+        <button class="btn-primary" onclick="openCandidateModal()">+ Tambah Paslon</button>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>No.</th>
+              <th>Nama</th>
+              <th>Visi</th>
+              <th>Misi</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="candidateTableBody">
+            <tr><td colspan="5" class="table-empty">Memuat data...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============================================
+         TAB: VOTERS
+         ============================================ -->
+    <div class="tab-content" id="tab-voters">
+      <div class="table-header">
+        <div class="card-title">Daftar Pemilih Tetap (DPT)</div>
+        <button class="btn-primary" onclick="openVoterModal()">+ Tambah Pemilih</button>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>NIM</th>
+              <th>Nama</th>
+              <th>Status</th>
+              <th>Waktu Memilih</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="voterTableBody">
+            <tr><td colspan="5" class="table-empty">Memuat data...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       MODAL: Candidate
+       ============================================ -->
+  <div class="modal-overlay" id="candidateModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="candidateModalTitle">Tambah Paslon</h2>
+        <button class="btn-close" onclick="closeCandidateModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="candidateId">
+        <div class="form-group">
+          <label>Nomor Urut</label>
+          <input type="number" id="candidateNumber" min="1" placeholder="Contoh: 1">
+        </div>
+        <div class="form-group">
+          <label>Nama Kandidat</label>
+          <input type="text" id="candidateName" placeholder="Nama lengkap kandidat">
+        </div>
+        <div class="form-group">
+          <label>Visi</label>
+          <textarea id="candidateVision" placeholder="Tuliskan visi kandidat"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Misi</label>
+          <textarea id="candidateMission" placeholder="Tuliskan misi kandidat"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Photo URL (Opsional)</label>
+          <input type="text" id="candidatePhoto" placeholder="https://...">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeCandidateModal()">Batal</button>
+        <button class="btn-save" id="btnSaveCandidate" onclick="saveCandidate()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       MODAL: Voter
+       ============================================ -->
+  <div class="modal-overlay" id="voterModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="voterModalTitle">Tambah Pemilih</h2>
+        <button class="btn-close" onclick="closeVoterModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>NIM</label>
+          <input type="text" id="voterNim" placeholder="Nomor Induk Mahasiswa">
+        </div>
+        <div class="form-group">
+          <label>Nama</label>
+          <input type="text" id="voterName" placeholder="Nama lengkap pemilih">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeVoterModal()">Batal</button>
+        <button class="btn-save" onclick="saveVoter()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ============================================
+       JAVASCRIPT
+       ============================================ -->
+  <script>
+    // ============================================
+    // Auth Check
+    // ============================================
+    const admin = JSON.parse(localStorage.getItem('admin') || 'null');
+    if (!admin) {
+      window.location.href = '/admin/login';
+    } else {
+      document.getElementById('adminName').textContent = admin.username;
+    }
+
+    function logout() {
+      localStorage.removeItem('admin');
+      window.location.href = '/admin/login';
+    }
+
+    // ============================================
+    // Tab Navigation
+    // ============================================
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+
+        // Load data when switching tabs
+        if (btn.dataset.tab === 'overview') loadStats();
+        if (btn.dataset.tab === 'candidates') loadCandidates();
+        if (btn.dataset.tab === 'voters') loadVoters();
+      });
+    });
+
+    // ============================================
+    // Toast
+    // ============================================
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = 'toast show ' + type;
+      setTimeout(() => {
+        toast.className = 'toast';
+      }, 3000);
+    }
+
+    // ============================================
+    // API Helper
+    // ============================================
+    async function api(url, options = {}) {
+      try {
+        const response = await fetch(url, {
+          headers: { 'Content-Type': 'application/json' },
+          ...options,
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Request failed');
+        return data;
+      } catch (err) {
+        showToast(err.message, 'error');
+        throw err;
+      }
+    }
+
+    // ============================================
+    // LOAD STATS
+    // ============================================
+    async function loadStats() {
+      try {
+        const data = await api('/api/admin/stats');
+
+        document.getElementById('statTotalVoters').textContent = data.total_voters;
+        document.getElementById('statVoted').textContent = data.total_voted;
+        document.getElementById('statNotVoted').textContent = data.total_not_voted;
+
+        const totalVoters = data.total_voters;
+        if (totalVoters > 0) {
+          const votedPct = ((data.total_voted / totalVoters) * 100).toFixed(1);
+          const notVotedPct = ((data.total_not_voted / totalVoters) * 100).toFixed(1);
+          document.getElementById('statVotedPercent').textContent = votedPct + '% dari total';
+          document.getElementById('statNotVotedPercent').textContent = notVotedPct + '% dari total';
+        } else {
+          document.getElementById('statVotedPercent').textContent = '0% dari total';
+          document.getElementById('statNotVotedPercent').textContent = '0% dari total';
+        }
+
+        // Bar chart
+        renderBarChart(data.candidates, data.total_voters);
+      } catch (err) {
+        document.getElementById('barChart').innerHTML =
+          '<div class="chart-empty">Gagal memuat data statistik</div>';
+      }
+    }
+
+    // ============================================
+    // BAR CHART
+    // ============================================
+    function renderBarChart(candidates, totalVoters) {
+      const container = document.getElementById('barChart');
+
+      if (!candidates || candidates.length === 0) {
+        container.innerHTML = '<div class="chart-empty">Belum ada kandidat terdaftar</div>';
+        return;
+      }
+
+      const maxVotes = Math.max(...candidates.map(c => c.total_votes), 1);
+
+      container.innerHTML = candidates.map(c => {
+        const pct = totalVoters > 0 ? ((c.total_votes / totalVoters) * 100).toFixed(1) : 0;
+        const widthPct = maxVotes > 0 ? ((c.total_votes / maxVotes) * 100) : 0;
+
+        return `
+          <div class="bar-row">
+            <div class="bar-number">${c.number}</div>
+            <div class="bar-label" title="${c.name}">${c.name}</div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width: ${widthPct}%">
+                ${widthPct > 15 ? `<span class="bar-count">${c.total_votes} suara</span>` : ''}
+              </div>
+            </div>
+            ${widthPct <= 15 ? `<span class="bar-count-outside">${c.total_votes} suara (${pct}%)</span>` : `<span class="bar-count-outside">${pct}%</span>`}
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ============================================
+    // CANDIDATES
+    // ============================================
+    let candidatesData = [];
+
+    async function loadCandidates() {
+      try {
+        candidatesData = await api('/api/admin/candidates');
+        renderCandidateTable();
+      } catch (err) {
+        // handled by api()
+      }
+    }
+
+    function renderCandidateTable() {
+      const tbody = document.getElementById('candidateTableBody');
+
+      if (!candidatesData.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="table-empty">Belum ada kandidat terdaftar</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = candidatesData.map(c => `
+        <tr>
+          <td><span class="badge badge-number">${c.number}</span></td>
+          <td><strong>${escapeHtml(c.name)}</strong></td>
+          <td>${escapeHtml(c.vision).substring(0, 60)}${c.vision.length > 60 ? '...' : ''}</td>
+          <td>${escapeHtml(c.mission).substring(0, 60)}${c.mission.length > 60 ? '...' : ''}</td>
+          <td>
+            <div class="action-btns">
+              <button class="btn-sm btn-edit" onclick='editCandidate(${JSON.stringify(c)})'>Edit</button>
+              <button class="btn-sm btn-delete" onclick="deleteCandidate(${c.id}, '${escapeHtml(c.name)}')">Hapus</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openCandidateModal(data = null) {
+      document.getElementById('candidateModal').classList.add('show');
+      document.getElementById('candidateModalTitle').textContent = data ? 'Edit Paslon' : 'Tambah Paslon';
+      document.getElementById('candidateId').value = data ? data.id : '';
+      document.getElementById('candidateNumber').value = data ? data.number : '';
+      document.getElementById('candidateName').value = data ? data.name : '';
+      document.getElementById('candidateVision').value = data ? data.vision : '';
+      document.getElementById('candidateMission').value = data ? data.mission : '';
+      document.getElementById('candidatePhoto').value = data && data.photo_url ? data.photo_url : '';
+    }
+
+    function closeCandidateModal() {
+      document.getElementById('candidateModal').classList.remove('show');
+    }
+
+    function editCandidate(c) {
+      openCandidateModal(c);
+    }
+
+    async function saveCandidate() {
+      const id = document.getElementById('candidateId').value;
+      const number = document.getElementById('candidateNumber').value;
+      const name = document.getElementById('candidateName').value.trim();
+      const vision = document.getElementById('candidateVision').value.trim();
+      const mission = document.getElementById('candidateMission').value.trim();
+      const photo_url = document.getElementById('candidatePhoto').value.trim();
+
+      if (!number || !name || !vision || !mission) {
+        showToast('Semua field wajib harus diisi', 'error');
+        return;
+      }
+
+      const payload = {
+        name,
+        vision,
+        mission,
+        photo_url: photo_url || null,
+        number: parseInt(number),
+      };
+
+      try {
+        if (id) {
+          await api(`/api/admin/candidates/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(payload),
+          });
+          showToast('Kandidat berhasil diperbarui');
+        } else {
+          await api('/api/admin/candidates', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+          });
+          showToast('Kandidat berhasil ditambahkan');
+        }
+        closeCandidateModal();
+        loadCandidates();
+        loadStats();
+      } catch (err) {
+        // handled by api()
+      }
+    }
+
+    async function deleteCandidate(id, name) {
+      if (!confirm(`Hapus kandidat "${name}"? Tindakan ini tidak dapat dibatalkan.`)) return;
+
+      try {
+        await api(`/api/admin/candidates/${id}`, { method: 'DELETE' });
+        showToast('Kandidat berhasil dihapus');
+        loadCandidates();
+        loadStats();
+      } catch (err) {
+        // handled by api()
+      }
+    }
+
+    // ============================================
+    // VOTERS
+    // ============================================
+    let votersData = [];
+
+    async function loadVoters() {
+      try {
+        votersData = await api('/api/admin/voters');
+        renderVoterTable();
+      } catch (err) {
+        // handled by api()
+      }
+    }
+
+    function renderVoterTable() {
+      const tbody = document.getElementById('voterTableBody');
+
+      if (!votersData.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="table-empty">Belum ada pemilih terdaftar</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = votersData.map(v => {
+        const votedClass = v.is_voted ? 'badge-voted' : 'badge-not-voted';
+        const votedText = v.is_voted ? 'Sudah Memilih' : 'Belum Memilih';
+        const votedAt = v.voted_at ? formatDate(v.voted_at) : '—';
+
+        return `
+          <tr>
+            <td>${escapeHtml(v.nim)}</td>
+            <td>${escapeHtml(v.name)}</td>
+            <td><span class="badge ${votedClass}">${votedText}</span></td>
+            <td>${votedAt}</td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-sm btn-delete" onclick="deleteVoter(${v.id}, '${escapeHtml(v.name)}')">Hapus</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function openVoterModal() {
+      document.getElementById('voterModal').classList.add('show');
+      document.getElementById('voterNim').value = '';
+      document.getElementById('voterName').value = '';
+    }
+
+    function closeVoterModal() {
+      document.getElementById('voterModal').classList.remove('show');
+    }
+
+    async function saveVoter() {
+      const nim = document.getElementById('voterNim').value.trim();
+      const name = document.getElementById('voterName').value.trim();
+
+      if (!nim || !name) {
+        showToast('NIM dan Nama harus diisi', 'error');
+        return;
+      }
+
+      try {
+        await api('/api/admin/voters', {
+          method: 'POST',
+          body: JSON.stringify({ nim, name }),
+        });
+        showToast('Pemilih berhasil ditambahkan');
+        closeVoterModal();
+        loadVoters();
+      } catch (err) {
+        // handled by api()
+      }
+    }
+
+    async function deleteVoter(id, name) {
+      if (!confirm(`Hapus pemilih "${name}"? Tindakan ini tidak dapat dibatalkan.`)) return;
+
+      try {
+        await api(`/api/admin/voters/${id}`, { method: 'DELETE' });
+        showToast('Pemilih berhasil dihapus');
+        loadVoters();
+      } catch (err) {
+        // handled by api()
+      }
+    }
+
+    // ============================================
+    // UTILITIES
+    // ============================================
+    function escapeHtml(str) {
+      if (!str) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function formatDate(dateStr) {
+      const d = new Date(dateStr);
+      return d.toLocaleString('id-ID', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    }
+
+    // ============================================
+    // CLOSE MODALS ON OVERLAY CLICK
+    // ============================================
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          overlay.classList.remove('show');
+        }
+      });
+    });
+
+    // ============================================
+    // INITIAL LOAD
+    // ============================================
+    loadStats();
+  </script>
+</body>
+</html>

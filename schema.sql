@@ -1,0 +1,52 @@
+-- ============================================
+-- Database Schema for E-Election OSIS
+-- Database: db_e_election
+-- ============================================
+
+CREATE DATABASE IF NOT EXISTS db_e_election;
+USE db_e_election;
+
+-- ============================================
+-- Tabel Admins (untuk login admin)
+-- ============================================
+CREATE TABLE IF NOT EXISTS admins (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(50) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Default admin: username=admin, password=admin123
+INSERT INTO admins (username, password) VALUES ('admin', 'admin123')
+ON DUPLICATE KEY UPDATE username=username;
+
+-- ============================================
+-- Tabel Candidates (Kandidat / Paslon)
+-- vote_count disimpan langsung di tabel ini (tanpa tabel votes)
+-- ============================================
+CREATE TABLE IF NOT EXISTS candidates (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  candidate_number INT NOT NULL UNIQUE,
+  chairman_name VARCHAR(100) NOT NULL,
+  vice_chairman_name VARCHAR(100) NOT NULL,
+  vision_mission TEXT NOT NULL,
+  photo_url VARCHAR(500) DEFAULT NULL,
+  vote_count INT DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- ============================================
+-- Tabel Voters (Pemilih / DPT)
+-- identifier = NIM / token_code
+-- full_name  = nama lengkap
+-- role       = voter | admin
+-- ============================================
+CREATE TABLE IF NOT EXISTS voters (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  identifier VARCHAR(50) NOT NULL UNIQUE,
+  full_name VARCHAR(100) NOT NULL,
+  role VARCHAR(20) DEFAULT 'voter',
+  is_voted TINYINT(1) DEFAULT 0,
+  voted_at TIMESTAMP NULL DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;

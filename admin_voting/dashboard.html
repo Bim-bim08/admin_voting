@@ -85,6 +85,32 @@
     .toast.ok{background:rgba(52,211,153,.85)}
     .toast.err{background:rgba(248,113,113,.85)}
 
+    .skeleton{background:linear-gradient(90deg,var(--border) 25%,rgba(51,65,85,.6) 50%,var(--border) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:8px}
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+    .skeleton-text{height:14px;margin-bottom:8px}
+    .skeleton-value{height:36px;width:80px;margin-bottom:6px}
+    .skeleton-bar{height:10px;border-radius:20px;margin-bottom:12px}
+
+    .error-box{display:flex;flex-direction:column;align-items:center;gap:10px;padding:32px;color:var(--text-mute);font-size:13px}
+    .error-box .err-icon{font-size:32px;opacity:.6}
+    .error-box .err-msg{color:var(--red);font-weight:500}
+    .error-box button{margin-top:6px;padding:8px 16px;font-size:11px;font-weight:600;font-family:inherit;letter-spacing:.5px;text-transform:uppercase;border-radius:8px;background:rgba(99,102,241,.1);color:var(--accent);border:1px solid rgba(99,102,241,.25);cursor:pointer}
+    .error-box button:hover{background:rgba(99,102,241,.2)}
+
+    .confirm-bg{display:none;position:fixed;inset:0;z-index:250;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);align-items:center;justify-content:center}
+    .confirm-bg.show{display:flex}
+    .confirm-box{background:var(--glass);backdrop-filter:blur(24px);border:1px solid var(--glass-border);border-radius:18px;width:100%;max-width:400px;padding:28px;text-align:center;box-shadow:0 25px 50px -12px rgba(0,0,0,.5);animation:modalIn .25s ease}
+    .confirm-box .c-icon{font-size:36px;margin-bottom:12px}
+    .confirm-box .c-msg{font-size:14px;color:var(--text);margin-bottom:20px;line-height:1.5}
+    .confirm-box .c-actions{display:flex;gap:10px;justify-content:center}
+    .confirm-box .c-actions button{padding:10px 24px;font-size:11px;font-weight:600;font-family:inherit;letter-spacing:.5px;text-transform:uppercase;border-radius:10px;cursor:pointer;transition:all .15s}
+    .c-btn-cancel{background:transparent;border:1px solid var(--border);color:var(--text-dim)}
+    .c-btn-cancel:hover{border-color:#475569;color:var(--text)}
+    .c-btn-danger{background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.3);color:var(--red)}
+    .c-btn-danger:hover{background:rgba(248,113,113,.25)}
+    .c-btn-primary{background:linear-gradient(135deg,var(--accent2),var(--accent));border:none;color:#fff}
+    .c-btn-primary:hover{opacity:.85}
+
     @media(max-width:768px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0}.stats,.quick-links{grid-template-columns:1fr}}
   </style>
 </head>
@@ -173,6 +199,16 @@
   </div>
 </div>
 
+<div class="confirm-bg" id="confirmModal">
+  <div class="confirm-box">
+    <div class="c-icon" id="confirmIcon"></div>
+    <div class="c-msg" id="confirmMsg"></div>
+    <div class="c-actions">
+      <button class="c-btn-cancel" onclick="closeConfirm(false)">Batal</button>
+      <button id="confirmBtn" onclick="closeConfirm(true)">Ya, Lanjutkan</button>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script src="admin.js"></script>
@@ -183,10 +219,37 @@
   function esc(s){if(!s)return'';var d=document.createElement('div');d.textContent=s;return d.innerHTML}
   function toast(msg,type){type=type||'ok';var t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+type;setTimeout(function(){t.className='toast'},3000)}
   function setEl(id,val){var el=document.getElementById(id);if(el)el.textContent=val}
+
+  function showSkeletons(){
+    ['sTotal','sVoted','sNotVoted','sParticipation'].forEach(function(id){
+      var el=document.getElementById(id);if(el)el.innerHTML='<div class="skeleton skeleton-value"></div>';
+    });
+    var qb=document.getElementById('qcBody');
+    if(qb)qb.innerHTML='<div class="skeleton skeleton-bar" style="width:80%"></div><div class="skeleton skeleton-bar" style="width:60%"></div><div class="skeleton skeleton-bar" style="width:70%"></div>';
+  }
+  function showErrorState(elId,msg){
+    var el=document.getElementById(elId);if(!el)return;
+    el.innerHTML='<div class="error-box"><div class="err-icon">&#x26A0;&#xFE0F;</div><div class="err-msg">'+esc(msg)+'</div><button onclick="loadStats()">Coba Lagi</button></div>';
+  }
+
+  var _confirmResolve=null;
+  function showConfirm(msg,icon,danger){
+    return new Promise(function(resolve){
+      _confirmResolve=resolve;
+      document.getElementById('confirmIcon').textContent=icon||'&#x2753;';
+      document.getElementById('confirmMsg').textContent=msg;
+      var btn=document.getElementById('confirmBtn');
+      btn.className=danger?'c-btn-danger':'c-btn-primary';
+      btn.textContent=danger?'Ya, Hapus':'Ya, Lanjutkan';
+      document.getElementById('confirmModal').classList.add('show');
+    });
+  }
+  function closeConfirm(val){document.getElementById('confirmModal').classList.remove('show');if(_confirmResolve){_confirmResolve(val);_confirmResolve=null}}
   function updateClock(){var now=new Date();setEl('clock',now.toLocaleDateString('id-ID',{weekday:'long',day:'2-digit',month:'long',year:'numeric'})+' \u2022 '+now.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'}))}
   updateClock();setInterval(updateClock,1000);
 
   async function loadStats(){
+    showSkeletons();
     try{
       var d=await AdminAPI.stats();
       var tv=d.total_voters||0;
@@ -210,6 +273,7 @@
     }catch(err){
       console.warn('loadStats error:',err);
       setEl('sTotal','0');setEl('sVoted','0');setEl('sNotVoted','0');setEl('sParticipation','0.0%');
+      toast('Gagal memuat data statistik','err');
     }
   }
 
@@ -243,6 +307,7 @@
       else badge.className+=' status-belum';
     }catch(e){
       setEl('votingStatusText','Tidak diketahui');
+      toast('Gagal memuat status pemilihan','err');
     }
   }
 

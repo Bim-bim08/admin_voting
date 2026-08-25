@@ -90,6 +90,37 @@
     .toast.ok{background:rgba(52,211,153,.85)}
     .toast.err{background:rgba(248,113,113,.85)}
 
+    .skeleton{background:linear-gradient(90deg,var(--border) 25%,rgba(51,65,85,.6) 50%,var(--border) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:8px}
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+    .skeleton-photo{height:200px;border-radius:14px 14px 0 0}
+    .skeleton-line{height:14px;margin-bottom:8px}
+    .skeleton-line-short{width:60%}
+    .skeleton-block{height:80px;border-radius:10px}
+
+    .error-box{display:flex;flex-direction:column;align-items:center;gap:10px;padding:48px;color:var(--text-mute);font-size:13px}
+    .error-box .err-icon{font-size:32px;opacity:.6}
+    .error-box .err-msg{color:var(--red);font-weight:500}
+    .error-box button{margin-top:6px;padding:8px 16px;font-size:11px;font-weight:600;font-family:inherit;letter-spacing:.5px;text-transform:uppercase;border-radius:8px;background:rgba(99,102,241,.1);color:var(--accent);border:1px solid rgba(99,102,241,.25);cursor:pointer}
+    .error-box button:hover{background:rgba(99,102,241,.2)}
+
+    .confirm-bg{display:none;position:fixed;inset:0;z-index:250;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);align-items:center;justify-content:center}
+    .confirm-bg.show{display:flex}
+    .confirm-box{background:var(--glass);backdrop-filter:blur(24px);border:1px solid var(--glass-border);border-radius:18px;width:100%;max-width:400px;padding:28px;text-align:center;box-shadow:0 25px 50px -12px rgba(0,0,0,.5);animation:modalIn .25s ease}
+    .confirm-box .c-icon{font-size:36px;margin-bottom:12px}
+    .confirm-box .c-msg{font-size:14px;color:var(--text);margin-bottom:20px;line-height:1.5}
+    .confirm-box .c-actions{display:flex;gap:10px;justify-content:center}
+    .confirm-box .c-actions button{padding:10px 24px;font-size:11px;font-weight:600;font-family:inherit;letter-spacing:.5px;text-transform:uppercase;border-radius:10px;cursor:pointer;transition:all .15s}
+    .c-btn-cancel{background:transparent;border:1px solid var(--border);color:var(--text-dim)}
+    .c-btn-cancel:hover{border-color:#475569;color:var(--text)}
+    .c-btn-danger{background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.3);color:var(--red)}
+    .c-btn-danger:hover{background:rgba(248,113,113,.25)}
+    .c-btn-primary{background:linear-gradient(135deg,var(--accent2),var(--accent));border:none;color:#fff}
+    .c-btn-primary:hover{opacity:.85}
+
+    .btn-loading{position:relative;pointer-events:none;opacity:.7}
+    .btn-loading::after{content:'';position:absolute;width:14px;height:14px;top:50%;left:50%;margin:-7px 0 0 -7px;border:2px solid transparent;border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
     @media(max-width:768px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0}.paslon-grid{grid-template-columns:1fr}}
   </style>
 </head>
@@ -140,6 +171,16 @@
   </div>
 </div>
 
+<div class="confirm-bg" id="confirmModal">
+  <div class="confirm-box">
+    <div class="c-icon" id="confirmIcon"></div>
+    <div class="c-msg" id="confirmMsg"></div>
+    <div class="c-actions">
+      <button class="c-btn-cancel" onclick="closeConfirm(false)">Batal</button>
+      <button id="confirmBtn" onclick="closeConfirm(true)">Ya, Lanjutkan</button>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script src="admin.js"></script>
@@ -149,13 +190,28 @@
 
   function esc(s){if(!s)return'';var d=document.createElement('div');d.textContent=s;return d.innerHTML}
   function toast(msg,type){type=type||'ok';var t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+type;setTimeout(function(){t.className='toast'},3000)}
+
+  var _confirmResolve=null;
+  function showConfirm(msg,icon,danger){
+    return new Promise(function(resolve){
+      _confirmResolve=resolve;
+      document.getElementById('confirmIcon').textContent=icon||'&#x2753;';
+      document.getElementById('confirmMsg').textContent=msg;
+      var btn=document.getElementById('confirmBtn');
+      btn.className=danger?'c-btn-danger':'c-btn-primary';
+      btn.textContent=danger?'Ya, Hapus':'Ya, Lanjutkan';
+      document.getElementById('confirmModal').classList.add('show');
+    });
+  }
+  function closeConfirm(val){document.getElementById('confirmModal').classList.remove('show');if(_confirmResolve){_confirmResolve(val);_confirmResolve=null}}
   function updateClock(){var now=new Date();document.getElementById('clock').textContent=now.toLocaleDateString('id-ID',{weekday:'long',day:'2-digit',month:'long',year:'numeric'})+' \u2022 '+now.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}
   updateClock();setInterval(updateClock,1000);
 
   var candList=[];
   async function loadCandidates(){
-    try{candList=await AdminAPI.candidates.list()}catch(e){candList=[]}
     var grid=document.getElementById('paslonGrid');
+    grid.innerHTML='<div class="paslon-empty"><div class="skeleton skeleton-photo"></div></div><div class="paslon-empty"><div class="skeleton skeleton-photo"></div></div>';
+    try{candList=await AdminAPI.candidates.list()}catch(e){candList=[];toast('Gagal memuat data kandidat','err')}
     if(!candList.length){grid.innerHTML='<div class="paslon-empty">Belum ada kandidat terdaftar</div>';return}
     grid.innerHTML=candList.map(function(c){
       var photo=c.photo_url?'<img src="'+esc(c.photo_url)+'" alt="'+esc(c.chairman_name)+'" onerror="this.parentElement.textContent=\'\\u2B1A\'">':'\\u2B1A';
@@ -190,7 +246,8 @@
     close:function(){document.getElementById('candModal').classList.remove('show')},
     edit:function(id){for(var i=0;i<candList.length;i++){if(candList[i].id===id){this.open(candList[i]);return}}},
     del:async function(id,name){
-      if(!confirm('Hapus kandidat "'+name+'"?'))return;
+      var ok=await showConfirm('Hapus kandidat "'+name+'"? Tindakan ini tidak dapat dibatalkan.','&#x26A0;&#xFE0F;',true);
+      if(!ok)return;
       try{await AdminAPI.candidates.del(id);toast('Kandidat berhasil dihapus');loadCandidates()}catch(e){toast(e.message,'err')}
     },
     save:async function(){
@@ -203,12 +260,15 @@
       var photo=document.getElementById('candPhoto').value.trim()||null;
       if(!chairman||!vice||!vis){toast('Nama Ketua, Wakil, dan Visi wajib diisi','err');return}
       var body={chairman_name:chairman,vice_chairman_name:vice,vision_mission:vis,photo_url:photo,candidate_number:parseInt(num)||undefined};
+      var saveBtn=document.querySelector('.modal-foot .btn-save');
+      saveBtn.classList.add('btn-loading');saveBtn.disabled=true;
       try{
         if(id)await AdminAPI.candidates.update(id,body);
         else await AdminAPI.candidates.add(body);
         toast(id?'Paslon berhasil diperbarui':'Paslon berhasil ditambahkan');
         this.close();loadCandidates();
       }catch(e){toast(e.message,'err')}
+      finally{saveBtn.classList.remove('btn-loading');saveBtn.disabled=false}
     }
   };
 

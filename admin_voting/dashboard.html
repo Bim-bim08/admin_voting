@@ -251,7 +251,7 @@
   async function loadStats(){
     showSkeletons();
     try{
-      var d=await AdminAPI.stats();
+      var d=await AdminAPI.publicStats();
       var tv=d.total_voters||0;
       var tvoted=d.total_voted||0;
       var tnot=d.total_not_voted||0;

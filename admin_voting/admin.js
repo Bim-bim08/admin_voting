@@ -102,4 +102,14 @@ const AdminAPI = {
     async get()    { return apiFetch('/api/admin/voting-status'); },
     async set(s)   { return apiFetch('/api/admin/voting-status', { method: 'POST', body: JSON.stringify({ voting_status: s }) }); },
   },
+
+  // ── Public Voter API (for DPT table) ──
+  publicVoters: {
+    async list() { return apiFetch('/api/voters'); },
+  },
+
+  // ── Public Stats API (for Dashboard) ──
+  async publicStats() {
+    return apiFetch('/api/stats');
+  },
 };

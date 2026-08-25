@@ -161,7 +161,7 @@
       <div class="search-box">
         <input type="text" id="dptSearch" placeholder="Cari NIS/NISN atau Nama..." oninput="debounceSearch()">
       </div>
-      <select class="filter-select" id="dptFilterKelas" onchange="loadVoters(1)">
+      <select class="filter-select" id="dptFilterKelas" onchange="currentPage=1;renderFiltered()">
         <option value="">Semua Kelas</option>
       </select>
       <button class="btn-add" onclick="VoterUI.open()">+ Tambah Pemilih</button>
@@ -214,6 +214,7 @@
   var currentSearch = '';
   var currentKelas = '';
   var searchTimer = null;
+  var allVoters = []; // cache all voters from public API
 
   function esc(s){if(!s)return'';var d=document.createElement('div');d.textContent=s;return d.innerHTML}
   function toast(msg,type){type=type||'ok';var t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+type;setTimeout(function(){t.className='toast'},3000)}
@@ -237,7 +238,38 @@
 
   function debounceSearch(){
     clearTimeout(searchTimer);
-    searchTimer=setTimeout(function(){loadVoters(1)},300);
+    searchTimer=setTimeout(function(){
+      currentSearch=document.getElementById('dptSearch').value.trim().toLowerCase();
+      currentKelas=document.getElementById('dptFilterKelas').value;
+      currentPage=1;
+      // Re-filter from cached data (skip API fetch)
+      renderFiltered();
+    },300);
+  }
+
+  function renderFiltered(){
+    if(!allVoters.length)return;
+    currentSearch=document.getElementById('dptSearch').value.trim().toLowerCase();
+    currentKelas=document.getElementById('dptFilterKelas').value;
+    var filtered=allVoters.filter(function(v){
+      if(currentKelas && v.kelas!==currentKelas) return false;
+      if(currentSearch){
+        var q=currentSearch;
+        var matchId=(v.identifier||'').toLowerCase().indexOf(q)!==-1;
+        var matchName=(v.full_name||'').toLowerCase().indexOf(q)!==-1;
+        if(!matchId && !matchName) return false;
+      }
+      return true;
+    });
+    var limit=20;
+    var total=filtered.length;
+    var totalPages=Math.ceil(total/limit)||1;
+    if(currentPage>totalPages)currentPage=totalPages;
+    var start=(currentPage-1)*limit;
+    var list=filtered.slice(start,start+limit);
+    var pag={page:currentPage,total:total,totalPages:totalPages};
+    renderTable(list);
+    renderPagination(pag);
   }
 
   function showTableSkeleton(){
@@ -251,34 +283,60 @@
 
   async function loadVoters(page){
     currentPage=page||1;
-    currentSearch=document.getElementById('dptSearch').value.trim();
+    currentSearch=document.getElementById('dptSearch').value.trim().toLowerCase();
     currentKelas=document.getElementById('dptFilterKelas').value;
-    showTableSkeleton();
 
-    try{
-      var res=await AdminAPI.voters.search({search:currentSearch,kelas:currentKelas,page:currentPage,limit:20});
-      var list=res.data||[];
-      var pag=res.pagination||{page:1,total:0,totalPages:1};
-      var kelasOpts=res.kelas_options||[];
-
-      // Update filter dropdown
-      var sel=document.getElementById('dptFilterKelas');
-      var curVal=sel.value;
-      sel.innerHTML='<option value="">Semua Kelas</option>';
-      kelasOpts.forEach(function(k){
-        var opt=document.createElement('option');
-        opt.value=k;opt.textContent=k;
-        if(k===curVal)opt.selected=true;
-        sel.appendChild(opt);
-      });
-
-      renderTable(list);
-      renderPagination(pag);
-    }catch(e){
-      document.getElementById('dptBody').innerHTML='<tr><td colspan="6"><div class="error-box"><div class="err-icon">&#x26A0;&#xFE0F;</div><div class="err-msg">Gagal memuat data DPT</div><button onclick="loadVoters(1)">Coba Lagi</button></div></td></tr>';
-      document.getElementById('pagination').innerHTML='';
-      toast('Gagal memuat data pemilih','err');
+    // Fetch all voters from public API (only on first load or manual refresh)
+    if(!allVoters.length || page===1 && !document.getElementById('dptBody').querySelector('tr')){
+      showTableSkeleton();
+      try{
+        var res=await AdminAPI.publicVoters.list();
+        allVoters=res.data||[];
+      }catch(e){
+        document.getElementById('dptBody').innerHTML='<tr><td colspan="6"><div class="error-box"><div class="err-icon">&#x26A0;&#xFE0F;</div><div class="err-msg">Gagal memuat data DPT</div><button onclick="loadVoters(1)">Coba Lagi</button></div></td></tr>';
+        document.getElementById('pagination').innerHTML='';
+        toast('Gagal memuat data pemilih','err');
+        return;
+      }
     }
+
+    // Build kelas options from all data
+    var kelasSet={};
+    allVoters.forEach(function(v){if(v.kelas)kelasSet[v.kelas]=1});
+    var kelasOpts=Object.keys(kelasSet).sort();
+    var sel=document.getElementById('dptFilterKelas');
+    var curVal=sel.value;
+    sel.innerHTML='<option value="">Semua Kelas</option>';
+    kelasOpts.forEach(function(k){
+      var opt=document.createElement('option');
+      opt.value=k;opt.textContent=k;
+      if(k===curVal)opt.selected=true;
+      sel.appendChild(opt);
+    });
+
+    // Client-side search & filter
+    var filtered=allVoters.filter(function(v){
+      if(currentKelas && v.kelas!==currentKelas) return false;
+      if(currentSearch){
+        var q=currentSearch;
+        var matchId=(v.identifier||'').toLowerCase().indexOf(q)!==-1;
+        var matchName=(v.full_name||'').toLowerCase().indexOf(q)!==-1;
+        if(!matchId && !matchName) return false;
+      }
+      return true;
+    });
+
+    // Pagination
+    var limit=20;
+    var total=filtered.length;
+    var totalPages=Math.ceil(total/limit)||1;
+    if(currentPage>totalPages)currentPage=totalPages;
+    var start=(currentPage-1)*limit;
+    var list=filtered.slice(start,start+limit);
+    var pag={page:currentPage,total:total,totalPages:totalPages};
+
+    renderTable(list);
+    renderPagination(pag);
   }
 
   function renderTable(list){
@@ -320,12 +378,12 @@
     del:async function(id,name){
       var ok=await showConfirm('Hapus pemilih "'+name+'"? Tindakan ini tidak dapat dibatalkan.','&#x26A0;&#xFE0F;','c-btn-danger','Ya, Hapus');
       if(!ok)return;
-      try{await AdminAPI.voters.del(id);toast('Pemilih berhasil dihapus');loadVoters(currentPage)}catch(e){toast(e.message,'err')}
+      try{await AdminAPI.voters.del(id);toast('Pemilih berhasil dihapus');allVoters=[];loadVoters(currentPage)}catch(e){toast(e.message,'err')}
     },
     resetVote:async function(id,name){
       var ok=await showConfirm('Reset status vote "'+name+'"? Pemilih ini akan bisa memilih ulang.','&#x1F504;','c-btn-warning','Ya, Reset');
       if(!ok)return;
-      try{await AdminAPI.voters.reset(id);toast('Status vote berhasil direset');loadVoters(currentPage)}catch(e){toast(e.message,'err')}
+      try{await AdminAPI.voters.reset(id);toast('Status vote berhasil direset');allVoters=[];loadVoters(currentPage)}catch(e){toast(e.message,'err')}
     },
     save:async function(){
       var identifier=document.getElementById('voterIdentifier').value.trim();
@@ -337,7 +395,7 @@
       try{
         await AdminAPI.voters.add({identifier:identifier,full_name:full_name,kelas:kelas||null});
         toast('Pemilih berhasil ditambahkan');
-        this.close();loadVoters(1);
+        this.close();allVoters=[];loadVoters(1);
       }catch(e){toast(e.message,'err')}
       finally{saveBtn.classList.remove('btn-loading');saveBtn.disabled=false}
     }

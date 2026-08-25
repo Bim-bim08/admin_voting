@@ -641,6 +641,57 @@ app.post('/api/vote', async (req, res) => {
 });
 
 // ============================================
+// API - Public Voter & Stats (for Admin Web)
+// GET /api/voters  — list all voters for DPT table
+// GET /api/stats   — dashboard statistics
+// ============================================
+app.get('/api/voters', async (req, res) => {
+  try {
+    const [rows] = await pool.execute(
+      `SELECT id, identifier, full_name, kelas, is_voted, voted_at
+       FROM voters WHERE role = 'voter'
+       ORDER BY created_at DESC`
+    );
+    res.json({ data: rows });
+  } catch (err) {
+    console.error('Public voters error:', err);
+    res.status(500).json({ error: 'Gagal mengambil data pemilih' });
+  }
+});
+
+app.get('/api/stats', async (req, res) => {
+  try {
+    const [voterStats] = await pool.execute(
+      `SELECT COUNT(*) AS total_voters,
+              SUM(is_voted = 1) AS voted_count,
+              SUM(is_voted = 0) AS unvoted_count
+       FROM voters WHERE role = 'voter'`
+    );
+    const totalVoters = voterStats[0].total_voters;
+    const totalVoted = voterStats[0].voted_count || 0;
+    const totalNotVoted = voterStats[0].unvoted_count || 0;
+
+    const [candidateVotes] = await pool.execute(
+      `SELECT id, candidate_number, CONCAT(chairman_name, ' & ', vice_chairman_name) AS name, COALESCE(votes, 0) AS votes
+       FROM candidates ORDER BY candidate_number ASC`
+    );
+
+    const totalVotesCast = candidateVotes.reduce((sum, c) => sum + (c.votes || 0), 0);
+
+    res.json({
+      total_voters: totalVoters,
+      total_voted: totalVoted,
+      total_not_voted: totalNotVoted,
+      total_votes_cast: totalVotesCast,
+      candidates: candidateVotes,
+    });
+  } catch (err) {
+    console.error('Public stats error:', err);
+    res.status(500).json({ error: 'Gagal mengambil statistik' });
+  }
+});
+
+// ============================================
 // Static HTML serving (legacy - kept for backward compat)
 // ============================================
 app.get('/admin/legacy-login', (req, res) => {

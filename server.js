@@ -72,6 +72,20 @@ async function testConnection() {
     );
     console.log('✅ Table "voting_settings" is ready');
 
+    // Auto-create paslon table if it does not exist
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS paslon (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        nomor_urut INT NOT NULL,
+        nama_ketua VARCHAR(150) NOT NULL,
+        nama_wakil VARCHAR(150),
+        visi TEXT,
+        misi TEXT,
+        foto TEXT
+      )
+    `);
+    console.log('✅ Table "paslon" is ready');
+
     // Auto-add kelas column to voters table if missing
     try {
       await conn.execute(`ALTER TABLE voters ADD COLUMN kelas VARCHAR(50) DEFAULT NULL AFTER full_name`);
@@ -429,6 +443,115 @@ app.delete('/api/admin/candidates/:id', async (req, res) => {
   } catch (err) {
     console.error('Delete candidate error:', err);
     res.status(500).json({ error: 'Gagal menghapus kandidat' });
+  }
+});
+
+// ============================================
+// API - CRUD Paslon (new table: paslon)
+// ============================================
+
+// Auto-create paslon table on startup
+async function ensurePaslonTable() {
+  try {
+    await pool.execute(`
+      CREATE TABLE IF NOT EXISTS paslon (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        nomor_urut INT NOT NULL,
+        nama_ketua VARCHAR(150) NOT NULL,
+        nama_wakil VARCHAR(150),
+        visi TEXT,
+        misi TEXT,
+        foto TEXT
+      )
+    `);
+    console.log('✅ Table "paslon" is ready');
+  } catch (err) {
+    console.error('⚠️  Failed to create paslon table:', err.message);
+  }
+}
+
+// GET all paslon
+app.get('/api/paslon', async (req, res) => {
+  try {
+    await ensurePaslonTable();
+    const [rows] = await pool.execute(
+      'SELECT id, nomor_urut, nama_ketua, nama_wakil, visi, misi, foto FROM paslon ORDER BY nomor_urut ASC'
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('GET PASLON ERROR:', err);
+    res.status(500).json({ error: 'Gagal mengambil data paslon' });
+  }
+});
+
+// POST - Add paslon
+app.post('/api/paslon', async (req, res) => {
+  try {
+    await ensurePaslonTable();
+    const { nomor_urut, nama_ketua, nama_wakil, visi, misi, foto } = req.body;
+
+    if (!nomor_urut || !nama_ketua) {
+      return res.status(400).json({ error: 'Nomor urut dan nama ketua harus diisi' });
+    }
+
+    const [result] = await pool.execute(
+      'INSERT INTO paslon (nomor_urut, nama_ketua, nama_wakil, visi, misi, foto) VALUES (?, ?, ?, ?, ?, ?)',
+      [nomor_urut, nama_ketua, nama_wakil || null, visi || null, misi || null, foto || null]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Paslon berhasil ditambahkan',
+      id: result.insertId,
+    });
+  } catch (err) {
+    console.error('ADD PASLON ERROR:', err);
+    res.status(500).json({ error: 'Gagal menambahkan paslon' });
+  }
+});
+
+// PUT - Edit paslon
+app.put('/api/paslon/:id', async (req, res) => {
+  try {
+    await ensurePaslonTable();
+    const { id } = req.params;
+    const { nomor_urut, nama_ketua, nama_wakil, visi, misi, foto } = req.body;
+
+    if (!nomor_urut || !nama_ketua) {
+      return res.status(400).json({ error: 'Nomor urut dan nama ketua harus diisi' });
+    }
+
+    const [result] = await pool.execute(
+      'UPDATE paslon SET nomor_urut = ?, nama_ketua = ?, nama_wakil = ?, visi = ?, misi = ?, foto = ? WHERE id = ?',
+      [nomor_urut, nama_ketua, nama_wakil || null, visi || null, misi || null, foto || null, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Paslon tidak ditemukan' });
+    }
+
+    res.json({ success: true, message: 'Paslon berhasil diperbarui' });
+  } catch (err) {
+    console.error('UPDATE PASLON ERROR:', err);
+    res.status(500).json({ error: 'Gagal memperbarui paslon' });
+  }
+});
+
+// DELETE - Delete paslon
+app.delete('/api/paslon/:id', async (req, res) => {
+  try {
+    await ensurePaslonTable();
+    const { id } = req.params;
+    const [result] = await pool.execute('DELETE FROM paslon WHERE id = ?', [id]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Paslon tidak ditemukan' });
+    }
+
+    res.json({ success: true, message: 'Paslon berhasil dihapus' });
+  } catch (err) {
+    console.error('DELETE PASLON ERROR:', err);
+    res.status(500).json({ error: 'Gagal menghapus paslon' });
   }
 });
 

@@ -63,12 +63,20 @@ const AdminAPI = {
     return apiFetch('/api/admin/stats');
   },
 
-  // ── Candidates CRUD ──
+  // ── Candidates CRUD (old table) ──
   candidates: {
     async list()  { return apiFetch('/api/admin/candidates'); },
     async add(b)  { return apiFetch('/api/admin/candidates', { method: 'POST', body: JSON.stringify(b) }); },
     async update(id, b) { return apiFetch(`/api/admin/candidates/${id}`, { method: 'PUT', body: JSON.stringify(b) }); },
     async del(id) { return apiFetch(`/api/admin/candidates/${id}`, { method: 'DELETE' }); },
+  },
+
+  // ── Paslon CRUD (new table: paslon) ──
+  paslon: {
+    async list()  { return apiFetch('/api/paslon'); },
+    async add(b)  { return apiFetch('/api/paslon', { method: 'POST', body: JSON.stringify(b) }); },
+    async update(id, b) { return apiFetch(`/api/paslon/${id}`, { method: 'PUT', body: JSON.stringify(b) }); },
+    async del(id) { return apiFetch(`/api/paslon/${id}`, { method: 'DELETE' }); },
   },
 
   // ── Voters CRUD + Reset + Search ──

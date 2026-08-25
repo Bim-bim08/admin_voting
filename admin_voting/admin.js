@@ -108,6 +108,11 @@ const AdminAPI = {
     async list() { return apiFetch('/api/voters'); },
   },
 
+  // ── Public Candidates API (for paslon page) ──
+  publicCandidates: {
+    async list() { return apiFetch('/api/candidates'); },
+  },
+
   // ── Public Stats API (for Dashboard) ──
   async publicStats() {
     return apiFetch('/api/stats');

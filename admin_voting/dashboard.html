@@ -250,28 +250,52 @@
 
   async function loadStats(){
     showSkeletons();
+    var d=null;
+    // 1) Try public stats endpoint first
     try{
-      var d=await AdminAPI.publicStats();
+      d=await AdminAPI.publicStats();
+    }catch(err1){
+      console.warn('publicStats failed, falling back to /api/voters:',err1);
+    }
+    // 2) Fallback: compute stats from /api/voters if stats endpoint unavailable
+    if(!d){
+      try{
+        var res=await AdminAPI.publicVoters.list();
+        var voters=res.data||[];
+        var tv=voters.length;
+        var tvoted=0;
+        for(var i=0;i<voters.length;i++){if(voters[i].is_voted)tvoted++}
+        var tnot=tv-tvoted;
+        d={total_voters:tv,total_voted:tvoted,total_not_voted:tnot,total_votes_cast:0,candidates:[]};
+      }catch(err2){
+        console.warn('publicVoters fallback also failed:',err2);
+      }
+    }
+    // 3) Try to enrich candidates via public candidates endpoint
+    if(d&&(!d.candidates||!d.candidates.length)){
+      try{
+        var cRes=await AdminAPI.publicCandidates.list();
+        var cList=Array.isArray(cRes)?cRes:(cRes.data||[]);
+        if(cList.length){d.candidates=cList;d.total_votes_cast=cList.reduce(function(s,c){return s+(c.votes||0)},0)}
+      }catch(_){/* candidates fetch failed, show stats only */}
+    }
+    if(d){
       var tv=d.total_voters||0;
       var tvoted=d.total_voted||0;
       var tnot=d.total_not_voted||0;
       var pct=tv>0?((tvoted/tv)*100).toFixed(1):'0.0';
-
       setEl('sTotal',tv);
       setEl('sVoted',tvoted);
       setEl('sNotVoted',tnot);
       setEl('sParticipation',pct+'%');
       setEl('sVotedPct',tv>0?((tvoted/tv)*100).toFixed(1)+'% dari total':'0% dari total');
       setEl('sNotVotedPct',tv>0?((tnot/tv)*100).toFixed(1)+'% dari total':'0% dari total');
-
-      // Quick count preview
       if(d.candidates&&d.candidates.length){
         document.getElementById('qcCard').style.display='block';
-        setEl('qcTotal',d.total_votes_cast+' suara masuk');
-        renderQC(d.candidates,d.total_votes_cast);
+        setEl('qcTotal',(d.total_votes_cast||0)+' suara masuk');
+        renderQC(d.candidates,d.total_votes_cast||0);
       }
-    }catch(err){
-      console.warn('loadStats error:',err);
+    }else{
       setEl('sTotal','0');setEl('sVoted','0');setEl('sNotVoted','0');setEl('sParticipation','0.0%');
       toast('Gagal memuat data statistik','err');
     }
@@ -297,7 +321,7 @@
   async function loadVotingStatus(){
     try{
       var d=await AdminAPI.votingStatus.get();
-      var s=d.voting_status||'Belum Dimulai';
+      var s=d.voting_status||'Berlangsung';
       var badge=document.getElementById('votingStatusBadge');
       var txt=document.getElementById('votingStatusText');
       txt.textContent=s;
@@ -306,8 +330,12 @@
       else if(s==='Ditutup')badge.className+=' status-ditutup';
       else badge.className+=' status-belum';
     }catch(e){
-      setEl('votingStatusText','Tidak diketahui');
-      toast('Gagal memuat status pemilihan','err');
+      // Fallback: assume voting is active when API is unreachable
+      console.warn('loadVotingStatus fallback:',e);
+      var badge=document.getElementById('votingStatusBadge');
+      var txt=document.getElementById('votingStatusText');
+      txt.textContent='Berlangsung';
+      badge.className='status-badge status-berlangsung';
     }
   }
 

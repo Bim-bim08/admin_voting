@@ -208,14 +208,25 @@
   updateClock();setInterval(updateClock,1000);
 
   var candList=[];
+  var LOGO_FALLBACK='/logo-osis.png';
   async function loadCandidates(){
     var grid=document.getElementById('paslonGrid');
     grid.innerHTML='<div class="paslon-empty"><div class="skeleton skeleton-photo"></div></div><div class="paslon-empty"><div class="skeleton skeleton-photo"></div></div>';
-    try{candList=await AdminAPI.paslon.list()}catch(e){candList=[];toast('Gagal memuat data kandidat','err')}
+    try{
+      var res=await AdminAPI.publicCandidates.list();
+      // Handle dual format: array directly OR wrapped in {data:[...]}
+      candList=Array.isArray(res)?res:(res.data||[]);
+    }catch(e){
+      console.warn('publicCandidates failed, trying admin endpoint:',e);
+      try{candList=await AdminAPI.paslon.list()}catch(e2){candList=[]}
+      if(!Array.isArray(candList))candList=[];
+    }
     if(!candList.length){grid.innerHTML='<div class="paslon-empty">Belum ada kandidat terdaftar</div>';return}
     grid.innerHTML=candList.map(function(c){
-      var photoUrl=c.photo||'';
-      var photo=photoUrl?'<img src="'+esc(photoUrl)+'" alt="'+esc(c.chairman_name)+'" onerror="this.src=\'/logo-osis.png\'">':'<img src="/logo-osis.png" alt="'+esc(c.chairman_name)+'">';
+      var photoUrl=c.photo||c.photo_url||'';
+      var photo=photoUrl
+        ?'<img src="'+esc(photoUrl)+'" alt="'+esc(c.chairman_name)+'" onerror="this.onerror=null;this.src=\''+LOGO_FALLBACK+'\'">'
+        :'<img src="'+LOGO_FALLBACK+'" alt="'+esc(c.chairman_name)+'">';
       return '<div class="paslon-card">'+
         '<div class="paslon-photo">'+photo+'</div>'+
         '<div class="paslon-body">'+

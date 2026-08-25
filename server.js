@@ -641,6 +641,24 @@ app.post('/api/vote', async (req, res) => {
 });
 
 // ============================================
+// API - Public Candidates (for Admin Web paslon page)
+// GET /api/candidates — list all candidates
+// ============================================
+app.get('/api/candidates', async (req, res) => {
+  try {
+    const [rows] = await pool.execute(
+      `SELECT id, candidate_number, chairman_name, vice_chairman_name,
+              vision, mission, COALESCE(votes, 0) AS votes, photo
+       FROM candidates ORDER BY candidate_number ASC`
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Public candidates error:', err);
+    res.status(500).json({ error: 'Gagal mengambil data kandidat' });
+  }
+});
+
+// ============================================
 // API - Public Voter & Stats (for Admin Web)
 // GET /api/voters  — list all voters for DPT table
 // GET /api/stats   — dashboard statistics

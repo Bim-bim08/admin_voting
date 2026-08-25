@@ -71,7 +71,7 @@ app.post('/api/admin/login', async (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
-      return res.status(400).json({ error: 'Username dan password harus diisi' });
+      return res.status(400).json({ message: 'Username dan password harus diisi' });
     }
 
     const [rows] = await pool.execute(
@@ -80,7 +80,7 @@ app.post('/api/admin/login', async (req, res) => {
     );
 
     if (rows.length === 0) {
-      return res.status(401).json({ error: 'Username atau password salah' });
+      return res.status(401).json({ message: 'Username atau password salah' });
     }
 
     res.json({
@@ -89,8 +89,9 @@ app.post('/api/admin/login', async (req, res) => {
       admin: { id: rows[0].id, username: rows[0].username },
     });
   } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json({ error: 'Terjadi kesalahan server' });
+    console.error('Login error:', err.message || err);
+    console.error('Full error details:', err);
+    res.status(401).json({ message: 'Username atau password salah' });
   }
 });
 

@@ -281,7 +281,7 @@
       }catch(e){toast(e.message||'Gagal menghapus kandidat','err')}
     },
 
-    // POST/PUT via AdminAPI: AdminAPI.paslon.add() / AdminAPI.paslon.update()
+    // POST/PUT via direct fetch to API_URL
     save:async function(){
       var id=document.getElementById('candId').value;
       var num=document.getElementById('candNumber').value;
@@ -291,20 +291,31 @@
       var misi=document.getElementById('candMission').value.trim();
       var foto=document.getElementById('candPhoto').value.trim()||null;
       if(!num||!namaKetua){toast('Nomor urut dan Nama Ketua wajib diisi','err');return}
-      var payload={candidate_number:parseInt(num),chairman_name:namaKetua,vice_chairman_name:namaWakil||null,vision:visi||null,mission:misi||null,photo:foto};
+      var API_URL='https://web-voting-phi.vercel.app/api/candidates';
+      var method=id?'PUT':'POST';
+      var payload={
+        id:id?parseInt(id):null,
+        candidate_number:parseInt(num),
+        chairman_name:namaKetua,
+        vice_chairman_name:namaWakil||null,
+        vision:visi||null,
+        mission:misi||null,
+        photo:foto
+      };
       var saveBtn=document.querySelector('.modal-foot .btn-save');
       saveBtn.classList.add('btn-loading');saveBtn.disabled=true;
       try{
-        if(id){
-          // PUT: update existing candidate
-          await AdminAPI.paslon.update(parseInt(id),payload);
-          toast('Paslon berhasil diperbarui');
-        }else{
-          // POST: add new candidate
-          await AdminAPI.paslon.add(payload);
-          toast('Paslon berhasil ditambahkan');
+        var res=await fetch(API_URL,{
+          method:method,
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify(payload)
+        });
+        var data=await res.json();
+        if(!res.ok){
+          throw new Error(data.message||data.error||'Request gagal ('+res.status+')');
         }
         this.close();
+        toast(id?'Paslon berhasil diperbarui':'Paslon berhasil ditambahkan');
         loadCandidates();
       }catch(e){toast(e.message||'Gagal menyimpan kandidat','err')}
       finally{saveBtn.classList.remove('btn-loading');saveBtn.disabled=false}

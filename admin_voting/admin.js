@@ -28,7 +28,7 @@ async function apiFetch(url, options = {}) {
   }
 
   if (!res.ok) {
-    throw new Error(data.error || `Request gagal (${res.status})`);
+    throw new Error(data.message || data.error || `Request gagal (${res.status})`);
   }
   return data;
 }
@@ -41,6 +41,13 @@ const AdminAPI = {
   // ── Auth ──
   async login(username, password) {
     return apiFetch('/api/admin/login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    });
+  },
+
+  async register(username, password) {
+    return apiFetch('/api/register', {
       method: 'POST',
       body: JSON.stringify({ username, password }),
     });

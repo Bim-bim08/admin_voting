@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login Admin — E-Election OSIS</title>
+  <title>Register Admin — E-Election OSIS</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -20,7 +20,6 @@
       overflow: hidden;
     }
 
-    /* Animated bg dots */
     body::before {
       content: '';
       position: fixed; inset: 0;
@@ -102,6 +101,21 @@
       color: #fca5a5; font-size: 13px; text-align: center; border-radius: 10px;
     }
 
+    .success-msg {
+      display: none; margin-top: 14px; padding: 11px 14px;
+      background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.25);
+      color: #86efac; font-size: 13px; text-align: center; border-radius: 10px;
+    }
+
+    .register-footer {
+      text-align: center; margin-top: 24px;
+      font-size: 13px; color: #64748b;
+    }
+    .register-footer a {
+      color: #818cf8; text-decoration: none; font-weight: 600;
+    }
+    .register-footer a:hover { text-decoration: underline; }
+
     .footer {
       text-align: center; margin-top: 24px;
       font-size: 11px; color: #475569;
@@ -114,23 +128,24 @@
       <div class="login-header">
         <div class="tag">Admin Panel</div>
         <h1>E-Election OSIS</h1>
-        <p>Masukkan kredensial admin untuk mengakses dashboard.</p>
+        <p>Buat akun admin baru untuk mengakses dashboard.</p>
       </div>
-      <form id="loginForm" autocomplete="on">
+      <form id="registerForm" autocomplete="on">
         <div class="field">
           <label for="username">Username</label>
           <input type="text" id="username" placeholder="Masukkan username" required autocomplete="username">
         </div>
         <div class="field">
           <label for="password">Password</label>
-          <input type="password" id="password" placeholder="Masukkan password" required autocomplete="current-password">
+          <input type="password" id="password" placeholder="Masukkan password (min. 6 karakter)" required autocomplete="new-password">
         </div>
-        <button type="submit" class="btn-submit" id="btnLogin">Masuk</button>
+        <button type="submit" class="btn-submit" id="btnRegister">Daftar</button>
         <div class="error-msg" id="errorBox"></div>
+        <div class="success-msg" id="successBox"></div>
       </form>
 
-      <div style="text-align:center;margin-top:24px;font-size:13px;color:#64748b;">
-        Belum punya akun? <a href="/register" style="color:#818cf8;text-decoration:none;font-weight:600;">Daftar</a>
+      <div class="register-footer">
+        Sudah punya akun? <a href="/admin/login.html">Masuk</a>
       </div>
     </div>
     <div class="footer">E-Election OSIS &copy; 2026 &mdash; Sistem Pemilihan Digital</div>
@@ -138,11 +153,10 @@
 
   <script src="admin.js"></script>
   <script>
-    if (localStorage.getItem('admin')) location.href = '/admin/dashboard.html';
-
-    const form = document.getElementById('loginForm');
-    const errBox = document.getElementById('errorBox');
-    const btn = document.getElementById('btnLogin');
+    const form = document.getElementById('registerForm');
+    const errorBox = document.getElementById('errorBox');
+    const successBox = document.getElementById('successBox');
+    const btn = document.getElementById('btnRegister');
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -150,20 +164,22 @@
       const password = document.getElementById('password').value.trim();
       if (!username || !password) { showError('Username dan password harus diisi'); return; }
 
-      btn.disabled = true; btn.textContent = 'Memproses...'; errBox.style.display = 'none';
+      btn.disabled = true; btn.textContent = 'Memproses...';
+      errorBox.style.display = 'none'; successBox.style.display = 'none';
 
       try {
-        const data = await AdminAPI.login(username, password);
-        localStorage.setItem('admin', JSON.stringify(data.admin));
-        location.href = '/admin/dashboard.html';
+        await AdminAPI.register(username, password);
+        successBox.textContent = 'Registrasi berhasil! Mengalihkan ke halaman login...';
+        successBox.style.display = 'block';
+        setTimeout(() => { location.href = '/admin/login.html'; }, 1500);
       } catch (err) {
         showError(err.message);
       } finally {
-        btn.disabled = false; btn.textContent = 'Masuk';
+        btn.disabled = false; btn.textContent = 'Daftar';
       }
     });
 
-    function showError(msg) { errBox.textContent = msg; errBox.style.display = 'block'; }
+    function showError(msg) { errorBox.textContent = msg; errorBox.style.display = 'block'; }
   </script>
 </body>
 </html>

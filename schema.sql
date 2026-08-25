@@ -16,8 +16,8 @@ CREATE TABLE IF NOT EXISTS admins (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
--- Default admin: username=admin, password=admin123
-INSERT INTO admins (username, password) VALUES ('admin', 'admin123')
+-- Default admin: username=admin, password=admin123 (bcrypt hashed)
+INSERT INTO admins (username, password) VALUES ('admin', '$2b$10$zFJOZAEFc/CmS/1OUeAUs.z30HQg8xnpZcLSLOhopNKg8SB9FBoqm')
 ON DUPLICATE KEY UPDATE username=username;
 
 -- ============================================

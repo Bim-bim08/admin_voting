@@ -7,6 +7,8 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const mysql = require('mysql2/promise');
+const bcrypt = require('bcrypt');
+const BCRYPT_ROUNDS = 10;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -62,6 +64,11 @@ app.get('/admin', (req, res) => {
   res.redirect(302, '/admin/login.html');
 });
 
+// Redirect /register to register page
+app.get('/register', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin', 'register.html'));
+});
+
 // ============================================
 // API - Admin Login
 // POST /api/admin/login
@@ -75,11 +82,16 @@ app.post('/api/admin/login', async (req, res) => {
     }
 
     const [rows] = await pool.execute(
-      'SELECT id, username FROM admins WHERE username = ? AND password = ?',
-      [username, password]
+      'SELECT id, username, password FROM admins WHERE username = ?',
+      [username]
     );
 
     if (rows.length === 0) {
+      return res.status(401).json({ message: 'Username atau password salah' });
+    }
+
+    const match = await bcrypt.compare(password, rows[0].password);
+    if (!match) {
       return res.status(401).json({ message: 'Username atau password salah' });
     }
 
@@ -92,6 +104,51 @@ app.post('/api/admin/login', async (req, res) => {
     console.error('Login error:', err.message || err);
     console.error('Full error details:', err);
     res.status(401).json({ message: 'Username atau password salah' });
+  }
+});
+
+// ============================================
+// API - Register Admin
+// POST /api/register
+// ============================================
+app.post('/api/register', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).json({ message: 'Username dan password harus diisi' });
+    }
+
+    if (username.length < 3) {
+      return res.status(400).json({ message: 'Username minimal 3 karakter' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Password minimal 6 karakter' });
+    }
+
+    // Check if username already exists
+    const [existing] = await pool.execute(
+      'SELECT id FROM admins WHERE username = ?',
+      [username]
+    );
+
+    if (existing.length > 0) {
+      return res.status(409).json({ message: 'Username sudah digunakan' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
+
+    await pool.execute(
+      'INSERT INTO admins (username, password) VALUES (?, ?)',
+      [username, hashedPassword]
+    );
+
+    res.status(201).json({ success: true, message: 'Registrasi berhasil' });
+  } catch (err) {
+    console.error('Register error:', err.message || err);
+    console.error('Full error details:', err);
+    res.status(500).json({ message: 'Terjadi kesalahan server' });
   }
 });
 

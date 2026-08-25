@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login Admin — E-Election OSIS</title>
+  <title>Register Admin — E-Election OSIS</title>
   <style>
     * {
       margin: 0;
@@ -131,6 +131,34 @@
       text-align: center;
     }
 
+    .success-message {
+      display: none;
+      margin-top: 16px;
+      padding: 12px 16px;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      color: #166534;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .login-footer {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 13px;
+      color: #888;
+    }
+
+    .login-footer a {
+      color: #1a1a1a;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .login-footer a:hover {
+      text-decoration: underline;
+    }
+
     .footer-note {
       text-align: center;
       margin-top: 32px;
@@ -145,24 +173,25 @@
       <div class="login-header">
         <div class="badge">Admin Panel</div>
         <h1>E-Election OSIS</h1>
-        <p>Masukkan kredensial admin untuk mengakses dashboard.</p>
+        <p>Buat akun admin baru untuk mengakses dashboard.</p>
       </div>
 
-      <form id="loginForm">
+      <form id="registerForm">
         <div class="form-group">
           <label>Username</label>
           <input type="text" id="username" placeholder="Masukkan username" required autocomplete="username">
         </div>
         <div class="form-group">
           <label>Password</label>
-          <input type="password" id="password" placeholder="Masukkan password" required autocomplete="current-password">
+          <input type="password" id="password" placeholder="Masukkan password (min. 6 karakter)" required autocomplete="new-password">
         </div>
-        <button type="submit" class="btn-login" id="btnLogin">Masuk</button>
+        <button type="submit" class="btn-login" id="btnRegister">Daftar</button>
         <div class="error-message" id="errorMsg"></div>
+        <div class="success-message" id="successMsg"></div>
       </form>
 
-      <div style="text-align:center;margin-top:24px;font-size:13px;color:#888;">
-        Belum punya akun? <a href="/register" style="color:#1a1a1a;text-decoration:none;font-weight:600;">Daftar</a>
+      <div class="login-footer">
+        Sudah punya akun? <a href="/admin/login.html">Masuk</a>
       </div>
     </div>
     <div class="footer-note">
@@ -171,9 +200,10 @@
   </div>
 
   <script>
-    const form = document.getElementById('loginForm');
+    const form = document.getElementById('registerForm');
     const errorMsg = document.getElementById('errorMsg');
-    const btnLogin = document.getElementById('btnLogin');
+    const successMsg = document.getElementById('successMsg');
+    const btnRegister = document.getElementById('btnRegister');
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -186,12 +216,13 @@
         return;
       }
 
-      btnLogin.disabled = true;
-      btnLogin.textContent = 'Memproses...';
+      btnRegister.disabled = true;
+      btnRegister.textContent = 'Memproses...';
       errorMsg.style.display = 'none';
+      successMsg.style.display = 'none';
 
       try {
-        const response = await fetch('/api/admin/login', {
+        const response = await fetch('/api/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password }),
@@ -200,31 +231,27 @@
         const data = await response.json();
 
         if (!response.ok) {
-          showError(data.message || data.error || 'Login gagal');
+          showError(data.message || 'Registrasi gagal');
           return;
         }
 
-        // Store admin info
-        localStorage.setItem('admin', JSON.stringify(data.admin));
+        successMsg.textContent = 'Registrasi berhasil! Mengalihkan ke halaman login...';
+        successMsg.style.display = 'block';
 
-        // Redirect to dashboard
-        window.location.href = '/admin/dashboard';
+        setTimeout(() => {
+          window.location.href = '/admin/login.html';
+        }, 1500);
       } catch (err) {
         showError('Terjadi kesalahan. Silakan coba lagi.');
       } finally {
-        btnLogin.disabled = false;
-        btnLogin.textContent = 'Masuk';
+        btnRegister.disabled = false;
+        btnRegister.textContent = 'Daftar';
       }
     });
 
     function showError(msg) {
       errorMsg.textContent = msg;
       errorMsg.style.display = 'block';
-    }
-
-    // Check if already logged in
-    if (localStorage.getItem('admin')) {
-      window.location.href = '/admin/dashboard';
     }
   </script>
 </body>

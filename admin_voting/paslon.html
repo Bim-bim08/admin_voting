@@ -244,8 +244,8 @@
           '<div class="paslon-votes">'+(c.votes||0)+' suara</div>'+
         '</div>'+
         '<div class="paslon-actions">'+
-          '<button class="btn-edit" onclick="CandUI.edit('+c.id+')">Edit</button>'+
-          '<button class="btn-del" onclick="CandUI.del('+c.id+',\''+esc(c.chairman_name).replace(/'/g,"\\'")+'\')">Hapus</button>'+
+          '<button class="btn-edit" data-id="'+c.id+'">Edit</button>'+
+          '<button class="btn-del" data-id="'+c.id+'">Hapus</button>'+
         '</div>'+
       '</div>';
     }).join('');
@@ -283,7 +283,7 @@
     edit:function(id){for(var i=0;i<candList.length;i++){if(candList[i].id===id){this.open(candList[i]);return}}},
 
     // DELETE: AdminAPI.paslon.del(id) → DELETE /api/candidates?id=${id}
-    del:async function(id,name){
+    del:async function(id){
       var ok=await showConfirm('⚠️ Hapus kandidat ini?','⚠️',true);
       if(!ok)return;
       try{
@@ -352,6 +352,19 @@
   };
 
   document.querySelectorAll('.modal-bg').forEach(function(el){el.addEventListener('click',function(e){if(e.target===el)el.classList.remove('show')})});
+
+  // Event Delegation — tangkap klik tombol Edit/Hapus di dalam grid
+  document.getElementById('paslonGrid').addEventListener('click',function(e){
+    var target=e.target.closest('.btn-edit, .btn-del');
+    if(!target)return;
+    var id=parseInt(target.getAttribute('data-id'),10);
+    if(target.classList.contains('btn-edit')){
+      CandUI.edit(id);
+    }else if(target.classList.contains('btn-del')){
+      CandUI.del(id);
+    }
+  });
+
   loadCandidates();
 </script>
 </body>

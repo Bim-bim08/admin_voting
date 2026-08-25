@@ -191,6 +191,10 @@
   function esc(s){if(!s)return'';var d=document.createElement('div');d.textContent=s;return d.innerHTML}
   function toast(msg,type){type=type||'ok';var t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+type;setTimeout(function(){t.className='toast'},3000)}
 
+  // Silence semua unhandled rejections — jangan tampilkan error notification
+  // yang tidak ter-handle (termasuk background request seperti auth/status check)
+  window.addEventListener('unhandledrejection',function(e){e.preventDefault();console.warn('Unhandled rejection silenced:',e.reason)})
+
   var _confirmResolve=null;
   function showConfirm(msg,icon,danger){
     return new Promise(function(resolve){
@@ -223,20 +227,9 @@
       var res=await AdminAPI.paslon.list();
       // Handle dual format: array directly OR wrapped in {data:[...]}
       candList=Array.isArray(res)?res:(res.data||[]);
-    }catch(e){
-      candList=[];
-      // Network crash → tampilkan toast error agar user tahu koneksi putus
-      if(e instanceof TypeError || (e.status && e.status >= 500)){
-        console.error('loadCandidates network/server error:',e);
-        toast(e.message || 'Terjadi kesalahan jaringan','err');
-      }else{
-        // Non-critical (404, endpoint opsional) → senyap, tidak ganggu user
-        console.info('loadCandidates non-critical:',e.message||e);
-      }
-    }
-    // SUCCESS: data berhasil dimuat — JANGAN tampilkan error toast
-    if(!candList.length){grid.innerHTML='<div class="paslon-empty">Belum ada kandidat terdaftar</div>';return}
-    grid.innerHTML=candList.map(function(c){
+      // SUKSES — data dimuat, tampilkan di UI
+      if(!candList.length){grid.innerHTML='<div class="paslon-empty">Belum ada kandidat terdaftar</div>';return}
+      grid.innerHTML=candList.map(function(c){
       var photoUrl=c.photo||c.photo_url||'';
       var photo=photoUrl
         ?'<img src="'+esc(photoUrl)+'" alt="'+esc(c.chairman_name)+'" onerror="this.onerror=null;this.src=\''+LOGO_FALLBACK+'\'">'
@@ -256,6 +249,19 @@
         '</div>'+
       '</div>';
     }).join('');
+      return; // STOP — tidak lanjut ke blok error
+    }catch(e){
+      candList=[];
+      // Hanya tampilkan toast untuk error jaringan/ server (bukan 404)
+      if(e instanceof TypeError || (e.status && e.status >= 500)){
+        console.error('loadCandidates network/server error:',e);
+        toast(e.message || 'Terjadi kesalahan jaringan','err');
+      }else{
+        // Non-critical (404, endpoint opsional) → senyap, tidak ganggu user
+        console.info('loadCandidates non-critical:',e.message||e);
+      }
+      grid.innerHTML='<div class="paslon-empty">Gagal memuat data kandidat</div>';
+    }
   }
 
   // ============================================
@@ -282,11 +288,15 @@
       if(!ok)return;
       try{
         await AdminAPI.paslon.del(id);
+        // SUKSES — tampilkan toast, tutup modal, reload, STOP
         toast('Kandidat berhasil dihapus');
         CandUI.close();
         loadCandidates();
-        return;
-      }catch(e){toast(e.message||'Terjadi kesalahan jaringan','err')}
+        return; // Early return — tidak lanjut ke catch
+      }catch(e){
+        // GAGAL — hanya tampilkan pesan dinamis
+        toast(e.message||'Terjadi kesalahan jaringan','err');
+      }
     },
 
     // POST/PUT via direct fetch to API_URL
@@ -321,14 +331,18 @@
         var data;
         try{data=await res.json()}catch(_){data={}}
         if(!res.ok){
+          // Hanya blok ini yang menangani error HTTP
           throw new Error(data.message||data.error||'Terjadi kesalahan jaringan');
         }
+        // SUKSES (res.ok) — tampilkan toast, tutup modal, reload, STOP
         this.close();
         toast(id?'Paslon berhasil diperbarui':'Paslon berhasil ditambahkan');
         loadCandidates();
-        return;
-      }catch(e){toast(e.message||'Terjadi kesalahan jaringan','err')}
-      finally{saveBtn.classList.remove('btn-loading');saveBtn.disabled=false}
+        return; // Early return — tidak lanjut ke catch
+      }catch(e){
+        // GAGAL — hanya tampilkan pesan dinamis, tidak ada fallback hardcoded
+        toast(e.message||'Terjadi kesalahan jaringan','err');
+      }finally{saveBtn.classList.remove('btn-loading');saveBtn.disabled=false}
     }
   };
 

@@ -31,6 +31,8 @@ async function apiFetch(url, options = {}) {
 
   if (!res.ok) {
     var errMsg = data.message || data.error || `Request gagal (${res.status})`;
+    // Bersihkan pesan error bawaan server yang tidak informatif
+    if (errMsg === 'Endpoint tidak ditemukan') errMsg = 'Terjadi kesalahan jaringan';
     var err = new Error(errMsg);
     err.status = res.status;
     throw err;

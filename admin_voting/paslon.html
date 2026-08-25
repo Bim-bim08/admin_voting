@@ -228,12 +228,13 @@
       // Network crash → tampilkan toast error agar user tahu koneksi putus
       if(e instanceof TypeError || (e.status && e.status >= 500)){
         console.error('loadCandidates network/server error:',e);
-        toast('Gagal terhubung ke server','err');
+        toast(e.message || 'Terjadi kesalahan jaringan','err');
       }else{
         // Non-critical (404, endpoint opsional) → senyap, tidak ganggu user
         console.info('loadCandidates non-critical:',e.message||e);
       }
     }
+    // SUCCESS: data berhasil dimuat — JANGAN tampilkan error toast
     if(!candList.length){grid.innerHTML='<div class="paslon-empty">Belum ada kandidat terdaftar</div>';return}
     grid.innerHTML=candList.map(function(c){
       var photoUrl=c.photo||c.photo_url||'';
@@ -284,7 +285,8 @@
         toast('Kandidat berhasil dihapus');
         CandUI.close();
         loadCandidates();
-      }catch(e){toast(e.message||'Gagal menghapus kandidat','err')}
+        return;
+      }catch(e){toast(e.message||'Terjadi kesalahan jaringan','err')}
     },
 
     // POST/PUT via direct fetch to API_URL
@@ -316,14 +318,16 @@
           headers:{'Content-Type':'application/json'},
           body:JSON.stringify(payload)
         });
-        var data=await res.json();
+        var data;
+        try{data=await res.json()}catch(_){data={}}
         if(!res.ok){
-          throw new Error(data.message||data.error||'Request gagal ('+res.status+')');
+          throw new Error(data.message||data.error||'Terjadi kesalahan jaringan');
         }
         this.close();
         toast(id?'Paslon berhasil diperbarui':'Paslon berhasil ditambahkan');
         loadCandidates();
-      }catch(e){toast(e.message||'Gagal menyimpan kandidat','err')}
+        return;
+      }catch(e){toast(e.message||'Terjadi kesalahan jaringan','err')}
       finally{saveBtn.classList.remove('btn-loading');saveBtn.disabled=false}
     }
   };

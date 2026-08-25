@@ -641,9 +641,24 @@ app.post('/api/vote', async (req, res) => {
 });
 
 // ============================================
-// API - Public Candidates (for Admin Web paslon page)
-// GET /api/candidates — list all candidates
+// API - Public Candidates CRUD (for Admin Web)
+// GET /api/candidates         — list all candidates
+// POST /api/candidates        — add new candidate
+// PUT /api/candidates/:id     — edit candidate by ID
+// DELETE /api/candidates/:id  — delete candidate by ID
 // ============================================
+app.options('/api/candidates', (req, res) => {
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.sendStatus(204);
+});
+app.options('/api/candidates/:id', (req, res) => {
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.sendStatus(204);
+});
+
+// GET — list all candidates
 app.get('/api/candidates', async (req, res) => {
   try {
     const [rows] = await pool.execute(
@@ -653,8 +668,76 @@ app.get('/api/candidates', async (req, res) => {
     );
     res.json(rows);
   } catch (err) {
-    console.error('Public candidates error:', err);
-    res.status(500).json({ error: 'Gagal mengambil data kandidat' });
+    console.error('Public candidates GET error:', err);
+    res.status(500).json({ success: false, message: 'Gagal mengambil data kandidat' });
+  }
+});
+
+// POST — add new candidate
+app.post('/api/candidates', async (req, res) => {
+  try {
+    const { candidate_number, chairman_name, vice_chairman_name, vision, mission, photo } = req.body;
+
+    if (!chairman_name || !vice_chairman_name) {
+      return res.status(400).json({ success: false, message: 'Nama ketua dan wakil ketua harus diisi' });
+    }
+
+    const [result] = await pool.execute(
+      'INSERT INTO candidates (candidate_number, chairman_name, vice_chairman_name, vision, mission, photo) VALUES (?, ?, ?, ?, ?, ?)',
+      [candidate_number || null, chairman_name, vice_chairman_name, vision || null, mission || null, photo || null]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Kandidat berhasil ditambahkan',
+      id: result.insertId,
+    });
+  } catch (err) {
+    console.error('Public candidates POST error:', err);
+    res.status(500).json({ success: false, message: 'Gagal menambahkan kandidat' });
+  }
+});
+
+// PUT — edit candidate by ID
+app.put('/api/candidates/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { candidate_number, chairman_name, vice_chairman_name, vision, mission, photo } = req.body;
+
+    if (!chairman_name || !vice_chairman_name) {
+      return res.status(400).json({ success: false, message: 'Nama ketua dan wakil ketua harus diisi' });
+    }
+
+    const [result] = await pool.execute(
+      'UPDATE candidates SET candidate_number = ?, chairman_name = ?, vice_chairman_name = ?, vision = ?, mission = ?, photo = ? WHERE id = ?',
+      [candidate_number || null, chairman_name, vice_chairman_name, vision || null, mission || null, photo || null, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Kandidat tidak ditemukan' });
+    }
+
+    res.json({ success: true, message: 'Kandidat berhasil diperbarui' });
+  } catch (err) {
+    console.error('Public candidates PUT error:', err);
+    res.status(500).json({ success: false, message: 'Gagal memperbarui kandidat' });
+  }
+});
+
+// DELETE — delete candidate by ID
+app.delete('/api/candidates/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [result] = await pool.execute('DELETE FROM candidates WHERE id = ?', [id]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Kandidat tidak ditemukan' });
+    }
+
+    res.json({ success: true, message: 'Kandidat berhasil dihapus' });
+  } catch (err) {
+    console.error('Public candidates DELETE error:', err);
+    res.status(500).json({ success: false, message: 'Gagal menghapus kandidat' });
   }
 });
 

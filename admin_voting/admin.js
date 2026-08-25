@@ -65,20 +65,20 @@ const AdminAPI = {
     return apiFetch('/api/admin/stats');
   },
 
-  // ── Candidates CRUD (shared with voter app — db-e-election) ──
+  // ── Candidates CRUD (public endpoints, shared with voter app) ──
   candidates: {
-    async list()  { return apiFetch('/api/admin/candidates'); },
-    async add(b)  { return apiFetch('/api/admin/candidates', { method: 'POST', body: JSON.stringify(b) }); },
-    async update(id, b) { return apiFetch(`/api/admin/candidates/${id}`, { method: 'PUT', body: JSON.stringify(b) }); },
-    async del(id) { return apiFetch(`/api/admin/candidates/${id}`, { method: 'DELETE' }); },
+    async list()  { return apiFetch('/api/candidates'); },
+    async add(b)  { return apiFetch('/api/candidates', { method: 'POST', body: JSON.stringify(b) }); },
+    async update(id, b) { return apiFetch(`/api/candidates/${id}`, { method: 'PUT', body: JSON.stringify(b) }); },
+    async del(id) { return apiFetch(`/api/candidates/${id}`, { method: 'DELETE' }); },
   },
 
   // ── Alias: paslon → candidates (same table, different naming) ──
   paslon: {
-    async list()  { return apiFetch('/api/admin/candidates'); },
-    async add(b)  { return apiFetch('/api/admin/candidates', { method: 'POST', body: JSON.stringify(b) }); },
-    async update(id, b) { return apiFetch(`/api/admin/candidates/${id}`, { method: 'PUT', body: JSON.stringify(b) }); },
-    async del(id) { return apiFetch(`/api/admin/candidates/${id}`, { method: 'DELETE' }); },
+    async list()  { return apiFetch('/api/candidates'); },
+    async add(b)  { return apiFetch('/api/candidates', { method: 'POST', body: JSON.stringify(b) }); },
+    async update(id, b) { return apiFetch(`/api/candidates/${id}`, { method: 'PUT', body: JSON.stringify(b) }); },
+    async del(id) { return apiFetch(`/api/candidates/${id}`, { method: 'DELETE' }); },
   },
 
   // ── Voters CRUD + Reset + Search ──
@@ -108,9 +108,12 @@ const AdminAPI = {
     async list() { return apiFetch('/api/voters'); },
   },
 
-  // ── Public Candidates API (for paslon page) ──
+  // ── Public Candidates API (full CRUD, for paslon page) ──
   publicCandidates: {
-    async list() { return apiFetch('/api/candidates'); },
+    async list()     { return apiFetch('/api/candidates'); },
+    async add(b)     { return apiFetch('/api/candidates', { method: 'POST', body: JSON.stringify(b) }); },
+    async update(id, b) { return apiFetch(`/api/candidates/${id}`, { method: 'PUT', body: JSON.stringify(b) }); },
+    async del(id)    { return apiFetch(`/api/candidates/${id}`, { method: 'DELETE' }); },
   },
 
   // ── Public Stats API (for Dashboard) ──

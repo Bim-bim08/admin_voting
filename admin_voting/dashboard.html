@@ -120,11 +120,11 @@
   <div class="sb-head"><div class="sb-logo">E-Election OSIS</div><div class="sb-sub">Admin Dashboard</div></div>
   <div class="sb-status"><div class="dot"></div><span>Admin Active</span></div>
   <nav class="sb-nav">
-    <a class="active" href="/admin/dashboard.html"><span class="icon">&#x1F4CA;</span> Dashboard</a>
-    <a href="/admin/paslon.html"><span class="icon">&#x1F464;</span> Data Paslon</a>
-    <a href="/admin/dpt.html"><span class="icon">&#x1F4CB;</span> Data DPT</a>
+    <a class="active" href="/admin/dashboard.html"><span class="icon">📊</span> Dashboard</a>
+    <a href="/admin/paslon.html"><span class="icon">👤</span> Data Paslon</a>
+    <a href="/admin/dpt.html"><span class="icon">📋</span> Data DPT</a>
   </nav>
-  <div class="sb-foot"><button class="btn-logout" onclick="AdminAPI.logout()"><span>&#x1F6AA;</span> Keluar</button></div>
+  <div class="sb-foot"><button class="btn-logout" onclick="AdminAPI.logout()"><span>🚪</span> Keluar</button></div>
 </aside>
 
 <div class="main">
@@ -173,14 +173,14 @@
     <div class="sec-title">Akses Cepat</div>
     <div class="quick-links">
       <a class="quick-link" href="/admin/paslon.html">
-        <div class="ql-icon">&#x1F464;</div>
+        <div class="ql-icon">👤</div>
         <div class="ql-text">
           <h3>Data Paslon</h3>
           <p>Kelola pasangan calon ketua & wakil</p>
         </div>
       </a>
       <a class="quick-link" href="/admin/dpt.html">
-        <div class="ql-icon">&#x1F4CB;</div>
+        <div class="ql-icon">📋</div>
         <div class="ql-text">
           <h3>Data DPT</h3>
           <p>Kelola daftar pemilih tetap</p>
@@ -229,14 +229,14 @@
   }
   function showErrorState(elId,msg){
     var el=document.getElementById(elId);if(!el)return;
-    el.innerHTML='<div class="error-box"><div class="err-icon">&#x26A0;&#xFE0F;</div><div class="err-msg">'+esc(msg)+'</div><button onclick="loadStats()">Coba Lagi</button></div>';
+    el.innerHTML='<div class="error-box"><div class="err-icon">⚠️</div><div class="err-msg">'+esc(msg)+'</div><button onclick="loadStats()">Coba Lagi</button></div>';
   }
 
   var _confirmResolve=null;
   function showConfirm(msg,icon,danger){
     return new Promise(function(resolve){
       _confirmResolve=resolve;
-      document.getElementById('confirmIcon').textContent=icon||'&#x2753;';
+      document.getElementById('confirmIcon').textContent=icon||'❓';
       document.getElementById('confirmMsg').textContent=msg;
       var btn=document.getElementById('confirmBtn');
       btn.className=danger?'c-btn-danger':'c-btn-primary';

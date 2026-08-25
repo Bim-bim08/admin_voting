@@ -130,12 +130,12 @@
   <div class="sb-head"><div class="sb-logo">E-Election OSIS</div><div class="sb-sub">Admin Dashboard</div></div>
   <div class="sb-status"><div class="dot"></div><span>Admin Active</span></div>
   <nav class="sb-nav">
-    <a href="/admin/dashboard.html"><span class="icon">&#x1F4CA;</span> Dashboard</a>
-    <a href="/admin/dashboard.html#quickcount"><span class="icon">&#x1F5F3;</span> Quick Count</a>
-    <a class="active" href="/admin/paslon.html"><span class="icon">&#x1F464;</span> Data Paslon</a>
-    <a href="/admin/dpt.html"><span class="icon">&#x1F4CB;</span> Data DPT</a>
+    <a href="/admin/dashboard.html"><span class="icon">📊</span> Dashboard</a>
+    <a href="/admin/dashboard.html#quickcount"><span class="icon">🗳️</span> Quick Count</a>
+    <a class="active" href="/admin/paslon.html"><span class="icon">👤</span> Data Paslon</a>
+    <a href="/admin/dpt.html"><span class="icon">📋</span> Data DPT</a>
   </nav>
-  <div class="sb-foot"><button class="btn-logout" onclick="AdminAPI.logout()"><span>&#x1F6AA;</span> Keluar</button></div>
+  <div class="sb-foot"><button class="btn-logout" onclick="AdminAPI.logout()"><span>🚪</span> Keluar</button></div>
 </aside>
 
 <div class="main">
@@ -195,7 +195,7 @@
   function showConfirm(msg,icon,danger){
     return new Promise(function(resolve){
       _confirmResolve=resolve;
-      document.getElementById('confirmIcon').textContent=icon||'&#x2753;';
+      document.getElementById('confirmIcon').textContent=icon||'❓';
       document.getElementById('confirmMsg').textContent=msg;
       var btn=document.getElementById('confirmBtn');
       btn.className=danger?'c-btn-danger':'c-btn-primary';
@@ -208,29 +208,19 @@
   updateClock();setInterval(updateClock,1000);
 
   // ============================================
-  // API Configuration (API_BASE_URL from admin.js)
+  // Candidate state & config
   // ============================================
   var candList=[];
   var LOGO_FALLBACK='/logo-osis.png';
 
   // ============================================
-  // Helper: fetch with error handling
-  // ============================================
-  async function apiCall(url,options){
-    var res=await fetch(API_BASE_URL+url,options);
-    var data=await res.json();
-    if(!res.ok) throw new Error(data.message||data.error||'Request gagal ('+res.status+')');
-    return data;
-  }
-
-  // ============================================
-  // Load Candidates (GET /api/candidates)
+  // Load Candidates via AdminAPI (GET /api/candidates)
   // ============================================
   async function loadCandidates(){
     var grid=document.getElementById('paslonGrid');
     grid.innerHTML='<div class="paslon-empty"><div class="skeleton skeleton-photo"></div></div><div class="paslon-empty"><div class="skeleton skeleton-photo"></div></div>';
     try{
-      var res=await apiCall('/api/candidates');
+      var res=await AdminAPI.paslon.list();
       // Handle dual format: array directly OR wrapped in {data:[...]}
       candList=Array.isArray(res)?res:(res.data||[]);
     }catch(e){
@@ -279,19 +269,19 @@
     close:function(){document.getElementById('candModal').classList.remove('show')},
     edit:function(id){for(var i=0;i<candList.length;i++){if(candList[i].id===id){this.open(candList[i]);return}}},
 
-    // DELETE: fetch(`${API_BASE_URL}/api/candidates?id=${id}`)
+    // DELETE: AdminAPI.paslon.del(id) → DELETE /api/candidates?id=${id}
     del:async function(id,name){
-      var ok=await showConfirm('Hapus kandidat "'+name+'"? Tindakan ini tidak dapat dibatalkan.','&#x26A0;&#xFE0F;',true);
+      var ok=await showConfirm('⚠️ Hapus kandidat ini?','⚠️',true);
       if(!ok)return;
       try{
-        var res=await fetch(API_BASE_URL+'/api/candidates?id='+id,{method:'DELETE',headers:{'Content-Type':'application/json'}});
-        var data=await res.json();
-        if(res.ok){toast(data.message||'Kandidat berhasil dihapus');loadCandidates()}
-        else{toast(data.message||'Gagal menghapus kandidat','err')}
-      }catch(e){toast('Gagal menghapus kandidat','err')}
+        await AdminAPI.paslon.del(id);
+        toast('Kandidat berhasil dihapus');
+        CandUI.close();
+        loadCandidates();
+      }catch(e){toast(e.message||'Gagal menghapus kandidat','err')}
     },
 
-    // POST/PUT: fetch(`${API_BASE_URL}/api/candidates`)
+    // POST/PUT via AdminAPI: AdminAPI.paslon.add() / AdminAPI.paslon.update()
     save:async function(){
       var id=document.getElementById('candId').value;
       var num=document.getElementById('candNumber').value;
@@ -305,23 +295,18 @@
       var saveBtn=document.querySelector('.modal-foot .btn-save');
       saveBtn.classList.add('btn-loading');saveBtn.disabled=true;
       try{
-        var res;
         if(id){
-          // PUT: include id in body
-          payload.id=parseInt(id);
-          res=await fetch(API_BASE_URL+'/api/candidates',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+          // PUT: update existing candidate
+          await AdminAPI.paslon.update(parseInt(id),payload);
+          toast('Paslon berhasil diperbarui');
         }else{
           // POST: add new candidate
-          res=await fetch(API_BASE_URL+'/api/candidates',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+          await AdminAPI.paslon.add(payload);
+          toast('Paslon berhasil ditambahkan');
         }
-        var data=await res.json();
-        if(res.ok){
-          toast(data.message||(id?'Paslon berhasil diperbarui':'Paslon berhasil ditambahkan'));
-          this.close();loadCandidates();
-        }else{
-          toast(data.message||'Gagal menyimpan kandidat','err');
-        }
-      }catch(e){toast('Gagal menyimpan kandidat','err')}
+        this.close();
+        loadCandidates();
+      }catch(e){toast(e.message||'Gagal menyimpan kandidat','err')}
       finally{saveBtn.classList.remove('btn-loading');saveBtn.disabled=false}
     }
   };

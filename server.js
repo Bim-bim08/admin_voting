@@ -57,6 +57,22 @@ async function testConnection() {
     `);
     console.log('✅ Table "admin" is ready');
 
+    // Auto-create voting_settings table if it does not exist
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS voting_settings (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        setting_key VARCHAR(50) NOT NULL UNIQUE,
+        setting_value VARCHAR(50) NOT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `);
+    // Ensure default voting_status row exists
+    await conn.execute(`
+      INSERT IGNORE INTO voting_settings (setting_key, setting_value)
+      VALUES ('voting_status', 'Belum Dimulai')
+    `);
+    console.log('✅ Table "voting_settings" is ready');
+
     conn.release();
   } catch (err) {
     console.error('❌ Database connection failed:', err.message);
@@ -170,6 +186,104 @@ app.post('/api/register', async (req, res) => {
   } catch (err) {
     console.error('REGISTER ERROR:', err);
     res.status(500).json({ message: err.message });
+  }
+});
+
+// ============================================
+// API - Voting Status
+// GET  /api/admin/voting-status  — read current status
+// POST /api/admin/voting-status  — update status (admin only)
+// ============================================
+app.get('/api/admin/voting-status', async (req, res) => {
+  try {
+    const [rows] = await pool.execute(
+      "SELECT setting_value FROM voting_settings WHERE setting_key = 'voting_status'"
+    );
+    const status = rows.length > 0 ? rows[0].setting_value : 'Belum Dimulai';
+    res.json({ voting_status: status });
+  } catch (err) {
+    console.error('Get voting status error:', err);
+    res.status(500).json({ message: 'Gagal mengambil status pemilihan' });
+  }
+});
+
+app.post('/api/admin/voting-status', async (req, res) => {
+  try {
+    const { voting_status } = req.body;
+    const allowed = ['Belum Dimulai', 'Berlangsung', 'Ditutup'];
+    if (!voting_status || !allowed.includes(voting_status)) {
+      return res.status(400).json({
+        message: `Status harus salah satu dari: ${allowed.join(', ')}`,
+      });
+    }
+    await pool.execute(
+      `INSERT INTO voting_settings (setting_key, setting_value)
+       VALUES ('voting_status', ?)
+       ON DUPLICATE KEY UPDATE setting_value = ?`,
+      [voting_status, voting_status]
+    );
+    res.json({ success: true, message: `Status pemilihan diubah ke "${voting_status}"`, voting_status });
+  } catch (err) {
+    console.error('Set voting status error:', err);
+    res.status(500).json({ message: 'Gagal mengubah status pemilihan' });
+  }
+});
+
+// ============================================
+// API - Quick Count (public)
+// GET /api/quick-count
+// Hanya mengembalikan data jika status = 'Ditutup'
+// atau jika request datang dari session admin yang valid.
+// ============================================
+app.get('/api/quick-count', async (req, res) => {
+  try {
+    const [statusRows] = await pool.execute(
+      "SELECT setting_value FROM voting_settings WHERE setting_key = 'voting_status'"
+    );
+    const status = statusRows.length > 0 ? statusRows[0].setting_value : 'Belum Dimulai';
+
+    // Check if request is from an admin (by verifying admin query param or header)
+    const adminToken = req.headers['x-admin-token'] || req.query.admin_token;
+    let isAdmin = false;
+    if (adminToken) {
+      try {
+        const [adminRows] = await pool.execute(
+          'SELECT id FROM admin WHERE id = ?',
+          [adminToken]
+        );
+        isAdmin = adminRows.length > 0;
+      } catch (_) { /* ignore */ }
+    }
+
+    if (status !== 'Ditutup' && !isAdmin) {
+      return res.status(403).json({
+        message: 'Hasil quick count belum tersedia. Status pemilihan saat ini: ' + status,
+      });
+    }
+
+    const [candidates] = await pool.execute(
+      `SELECT id, candidate_number, chairman_name, vice_chairman_name,
+              vision_mission, photo_url, vote_count
+       FROM candidates ORDER BY candidate_number ASC`
+    );
+
+    const [voterStats] = await pool.execute(
+      `SELECT COUNT(*) AS total_voters,
+              SUM(is_voted = 1) AS voted_count
+       FROM voters`
+    );
+
+    const totalVotesCast = candidates.reduce((sum, c) => sum + (c.vote_count || 0), 0);
+
+    res.json({
+      voting_status: status,
+      total_voters: voterStats[0].total_voters,
+      total_votes_cast: totalVotesCast,
+      candidates,
+    });
+  } catch (err) {
+    console.error('Quick count error:', err);
+    res.status(500).json({ message: 'Gagal mengambil data quick count' });
   }
 });
 
@@ -392,11 +506,24 @@ app.post('/api/vote', async (req, res) => {
       return res.status(400).json({ error: 'Voter ID dan Candidate ID harus diisi' });
     }
 
+    // --- VALIDATION 1: Check voting status is 'Berlangsung' ---
+    const [statusRows] = await conn.execute(
+      "SELECT setting_value FROM voting_settings WHERE setting_key = 'voting_status'"
+    );
+    const votingStatus = statusRows.length > 0 ? statusRows[0].setting_value : 'Belum Dimulai';
+
+    if (votingStatus !== 'Berlangsung') {
+      await conn.rollback();
+      return res.status(403).json({
+        error: 'Voting tidak dapat dilakukan. Status pemilihan saat ini: ' + votingStatus,
+      });
+    }
+
     await conn.beginTransaction();
 
-    // Check if voter exists and has not voted
+    // --- VALIDATION 2: Check voter exists ---
     const [existing] = await conn.execute(
-      'SELECT is_voted FROM voters WHERE id = ?',
+      'SELECT id, is_voted FROM voters WHERE id = ?',
       [voter_id]
     );
 
@@ -405,6 +532,7 @@ app.post('/api/vote', async (req, res) => {
       return res.status(404).json({ error: 'Pemilih tidak ditemukan' });
     }
 
+    // --- VALIDATION 3: Prevent double voting ---
     if (existing[0].is_voted === 1) {
       await conn.rollback();
       return res.status(409).json({ error: 'Anda sudah melakukan voting' });

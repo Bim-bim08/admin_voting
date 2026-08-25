@@ -30,7 +30,10 @@ async function apiFetch(url, options = {}) {
   }
 
   if (!res.ok) {
-    throw new Error(data.message || data.error || `Request gagal (${res.status})`);
+    var errMsg = data.message || data.error || `Request gagal (${res.status})`;
+    var err = new Error(errMsg);
+    err.status = res.status;
+    throw err;
   }
   return data;
 }

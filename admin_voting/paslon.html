@@ -224,9 +224,15 @@
       // Handle dual format: array directly OR wrapped in {data:[...]}
       candList=Array.isArray(res)?res:(res.data||[]);
     }catch(e){
-      console.warn('loadCandidates error:',e);
       candList=[];
-      toast('Gagal memuat data kandidat','err');
+      // Network crash → tampilkan toast error agar user tahu koneksi putus
+      if(e instanceof TypeError || (e.status && e.status >= 500)){
+        console.error('loadCandidates network/server error:',e);
+        toast('Gagal terhubung ke server','err');
+      }else{
+        // Non-critical (404, endpoint opsional) → senyap, tidak ganggu user
+        console.info('loadCandidates non-critical:',e.message||e);
+      }
     }
     if(!candList.length){grid.innerHTML='<div class="paslon-empty">Belum ada kandidat terdaftar</div>';return}
     grid.innerHTML=candList.map(function(c){

@@ -9,10 +9,12 @@
 // ============================================
 // Base API Helper
 // ============================================
+const API_BASE_URL = 'https://web-voting-phi.vercel.app';
+
 async function apiFetch(url, options = {}) {
   let res;
   try {
-    res = await fetch(url, {
+    res = await fetch(API_BASE_URL + url, {
       headers: { 'Content-Type': 'application/json' },
       ...options,
     });

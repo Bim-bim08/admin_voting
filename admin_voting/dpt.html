@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data DPT — E-Election OSIS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg:#0f172a; --sidebar:#1e293b; --card:#1e293b; --border:#334155;
+      --text:#e2e8f0; --text-dim:#94a3b8; --text-mute:#64748b;
+      --accent:#818cf8; --accent2:#6366f1; --green:#34d399; --green-bg:rgba(52,211,153,.12);
+      --orange:#fb923c; --orange-bg:rgba(251,146,60,.12); --red:#f87171; --red-bg:rgba(248,113,113,.12);
+      --glass:rgba(30,41,59,.75); --glass-border:rgba(51,65,85,.6);
+    }
+    html{font-size:14px} body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;overflow-x:hidden}
+
+    .sidebar{position:fixed;top:0;left:0;width:260px;height:100vh;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:50;transition:transform .3s}
+    .sb-head{padding:24px 22px 20px;border-bottom:1px solid var(--border)}
+    .sb-logo{font-size:16px;font-weight:700;letter-spacing:-.3px;background:linear-gradient(135deg,var(--accent),#a78bfa);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px}
+    .sb-sub{font-size:11px;color:var(--text-mute);letter-spacing:.5px}
+    .sb-status{display:flex;align-items:center;gap:8px;padding:14px 22px;border-bottom:1px solid var(--border)}
+    .sb-status .dot{width:8px;height:8px;background:var(--green);border-radius:50%;box-shadow:0 0 8px rgba(52,211,153,.5)}
+    .sb-status span{font-size:12px;color:var(--text-dim)}
+    .sb-nav{flex:1;padding:12px 10px;display:flex;flex-direction:column;gap:2px}
+    .sb-nav a{display:flex;align-items:center;gap:12px;padding:11px 16px;font-size:13px;font-weight:500;font-family:inherit;color:var(--text-dim);background:transparent;border:none;border-radius:10px;cursor:pointer;transition:all .15s;text-decoration:none;width:100%}
+    .sb-nav a:hover{background:rgba(99,102,241,.08);color:var(--text)}
+    .sb-nav a.active{background:rgba(99,102,241,.12);color:var(--accent)}
+    .sb-nav a .icon{font-size:18px;width:22px;text-align:center}
+    .sb-foot{padding:16px 22px;border-top:1px solid var(--border)}
+    .btn-logout{display:flex;align-items:center;gap:10px;width:100%;padding:10px 16px;font-size:12px;font-weight:600;font-family:inherit;letter-spacing:.5px;text-transform:uppercase;color:var(--red);background:var(--red-bg);border:1px solid rgba(248,113,113,.2);border-radius:10px;cursor:pointer;transition:all .15s}
+    .btn-logout:hover{background:rgba(248,113,113,.2)}
+
+    .main{margin-left:260px;flex:1;min-height:100vh}
+    .top-bar{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;padding:16px 28px;background:rgba(15,23,42,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+    .top-bar h2{font-size:17px;font-weight:700;letter-spacing:-.2px}
+    .clock{font-size:12px;color:var(--text-mute);font-variant-numeric:tabular-nums}
+    .content{padding:24px 28px 40px}
+
+    .dpt-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+    .search-box{flex:1;min-width:200px;position:relative}
+    .search-box input{width:100%;padding:10px 14px 10px 38px;font-size:13px;font-family:inherit;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:10px;outline:none;transition:border-color .2s}
+    .search-box input:focus{border-color:var(--accent)}
+    .search-box::before{content:'\1F50D';position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none}
+    .filter-select{padding:10px 14px;font-size:13px;font-family:inherit;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:10px;outline:none;cursor:pointer;min-width:140px}
+    .filter-select:focus{border-color:var(--accent)}
+    .btn-add{padding:10px 18px;font-size:11px;font-weight:600;font-family:inherit;letter-spacing:.5px;text-transform:uppercase;border-radius:10px;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;border:none;cursor:pointer;transition:opacity .2s}
+    .btn-add:hover{opacity:.85}
+
+    .dpt-table-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+    .dpt-table-card table{width:100%;border-collapse:collapse}
+    .dpt-table-card thead th{padding:12px 16px;font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-mute);text-align:left;border-bottom:1px solid var(--border);background:rgba(15,23,42,.4)}
+    .dpt-table-card tbody td{padding:12px 16px;font-size:13px;border-bottom:1px solid rgba(51,65,85,.3)}
+    .dpt-table-card tbody tr:last-child td{border-bottom:none}
+    .dpt-table-card tbody tr:hover{background:rgba(99,102,241,.04)}
+    .badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;border-radius:20px}
+    .badge-voted{background:var(--green-bg);color:var(--green)}
+    .badge-not{background:var(--orange-bg);color:var(--orange)}
+    .badge-role{display:inline-block;padding:3px 8px;font-size:9px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;border-radius:4px;background:rgba(99,102,241,.12);color:var(--accent);margin-left:6px}
+    .btn-reset{padding:6px 12px;font-size:10px;font-weight:600;font-family:inherit;letter-spacing:.5px;text-transform:uppercase;border-radius:6px;background:rgba(251,146,60,.1);color:var(--orange);border:1px solid rgba(251,146,60,.2);cursor:pointer;transition:all .15s}
+    .btn-reset:hover{background:rgba(251,146,60,.2)}
+    .btn-del-sm{padding:6px 10px;font-size:10px;font-weight:600;font-family:inherit;letter-spacing:.5px;text-transform:uppercase;border-radius:6px;background:var(--red-bg);color:var(--red);border:1px solid rgba(248,113,113,.2);cursor:pointer;transition:all .15s;margin-left:6px}
+    .btn-del-sm:hover{background:rgba(248,113,113,.2)}
+    .dpt-empty{text-align:center;padding:40px;color:var(--text-mute);font-size:13px}
+
+    .pagination{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:20px}
+    .pagination button{padding:8px 14px;font-size:12px;font-weight:600;font-family:inherit;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text-dim);cursor:pointer;transition:all .15s}
+    .pagination button:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+    .pagination button.active{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+    .pagination button:disabled{opacity:.4;cursor:not-allowed}
+    .pagination .page-info{font-size:12px;color:var(--text-mute)}
+
+    .modal-bg{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);align-items:center;justify-content:center}
+    .modal-bg.show{display:flex}
+    .modal{background:var(--glass);backdrop-filter:blur(24px);border:1px solid var(--glass-border);border-radius:18px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 25px 50px -12px rgba(0,0,0,.5);animation:modalIn .25s ease}
+    @keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+    .modal-head{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--border)}
+    .modal-head h2{font-size:16px;font-weight:700}
+    .btn-x{width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--text-mute);background:rgba(51,65,85,.3);border:none;border-radius:8px;cursor:pointer;transition:all .15s}
+    .btn-x:hover{background:rgba(51,65,85,.5);color:var(--text)}
+    .modal-body{padding:24px}
+    .modal-foot{display:flex;justify-content:flex-end;gap:10px;padding:16px 24px;border-top:1px solid var(--border)}
+    .fg{margin-bottom:16px}
+    .fg label{display:block;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-mute);margin-bottom:6px}
+    .fg input,.fg select{width:100%;padding:11px 14px;font-size:13px;font-family:inherit;background:rgba(15,23,42,.5);color:var(--text);border:1px solid var(--border);border-radius:10px;outline:none;transition:border-color .2s}
+    .fg input:focus,.fg select:focus{border-color:var(--accent)}
+    .fg input::placeholder{color:#475569}
+    .btn-cancel{padding:10px 18px;font-size:11px;font-weight:600;font-family:inherit;letter-spacing:.5px;text-transform:uppercase;border-radius:10px;background:transparent;border:1px solid var(--border);color:var(--text-dim);cursor:pointer;transition:all .15s}
+    .btn-cancel:hover{border-color:#475569;color:var(--text)}
+    .btn-save{padding:10px 24px;font-size:11px;font-weight:600;font-family:inherit;letter-spacing:.5px;text-transform:uppercase;border-radius:10px;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;border:none;cursor:pointer;transition:opacity .2s}
+    .btn-save:hover{opacity:.85}
+
+    .toast{position:fixed;bottom:24px;right:24px;z-index:300;padding:12px 22px;font-size:13px;font-weight:500;color:#fff;border-radius:10px;transform:translateY(100px);opacity:0;transition:all .3s}
+    .toast.show{transform:translateY(0);opacity:1}
+    .toast.ok{background:rgba(52,211,153,.85)}
+    .toast.err{background:rgba(248,113,113,.85)}
+
+    @media(max-width:768px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0}.dpt-toolbar{flex-direction:column;align-items:stretch}}
+  </style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sb-head"><div class="sb-logo">E-Election OSIS</div><div class="sb-sub">Admin Dashboard</div></div>
+  <div class="sb-status"><div class="dot"></div><span>Admin Active</span></div>
+  <nav class="sb-nav">
+    <a href="/admin/dashboard.html"><span class="icon">&#x1F4CA;</span> Dashboard</a>
+    <a href="/admin/dashboard.html#quickcount"><span class="icon">&#x1F5F3;</span> Quick Count</a>
+    <a href="/admin/paslon.html"><span class="icon">&#x1F464;</span> Data Paslon</a>
+    <a class="active" href="/admin/dpt.html"><span class="icon">&#x1F4CB;</span> Data DPT</a>
+  </nav>
+  <div class="sb-foot"><button class="btn-logout" onclick="AdminAPI.logout()"><span>&#x1F6AA;</span> Keluar</button></div>
+</aside>
+
+<div class="main">
+  <div class="top-bar">
+    <h2>Data DPT</h2>
+    <div class="clock" id="clock"></div>
+  </div>
+  <div class="content">
+    <div class="dpt-toolbar">
+      <div class="search-box">
+        <input type="text" id="dptSearch" placeholder="Cari NIS/NISN atau Nama..." oninput="debounceSearch()">
+      </div>
+      <select class="filter-select" id="dptFilterKelas" onchange="loadVoters(1)">
+        <option value="">Semua Kelas</option>
+      </select>
+      <button class="btn-add" onclick="VoterUI.open()">+ Tambah Pemilih</button>
+    </div>
+
+    <div class="dpt-table-card">
+      <table>
+        <thead><tr><th>NIS/NISN</th><th>Nama</th><th>Kelas</th><th>Status</th><th>Waktu Memilih</th><th>Aksi</th></tr></thead>
+        <tbody id="dptBody"><tr><td colspan="6" class="dpt-empty">Memuat data&hellip;</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="pagination" id="pagination"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="voterModal">
+  <div class="modal">
+    <div class="modal-head"><h2>Tambah Pemilih</h2><button class="btn-x" onclick="VoterUI.close()">&times;</button></div>
+    <div class="modal-body">
+      <div class="fg"><label>NIS / NISN</label><input type="text" id="voterIdentifier" placeholder="Masukkan NIS atau NISN"></div>
+      <div class="fg"><label>Nama Lengkap</label><input type="text" id="voterFullName" placeholder="Nama lengkap"></div>
+      <div class="fg"><label>Kelas</label><input type="text" id="voterKelas" placeholder="Contoh: XII IPA 1"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="VoterUI.close()">Batal</button>
+      <button class="btn-save" onclick="VoterUI.save()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="admin.js"></script>
+<script>
+  var admin = JSON.parse(localStorage.getItem('admin') || 'null');
+  if (!admin) location.href = '/admin/login.html';
+
+  var currentPage = 1;
+  var currentSearch = '';
+  var currentKelas = '';
+  var searchTimer = null;
+
+  function esc(s){if(!s)return'';var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+  function toast(msg,type){type=type||'ok';var t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+type;setTimeout(function(){t.className='toast'},3000)}
+  function fmtDate(d){if(!d)return'\u2014';try{return new Date(d).toLocaleString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}catch(e){return'\u2014'}}
+  function updateClock(){var now=new Date();document.getElementById('clock').textContent=now.toLocaleDateString('id-ID',{weekday:'long',day:'2-digit',month:'long',year:'numeric'})+' \u2022 '+now.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}
+  updateClock();setInterval(updateClock,1000);
+
+  function debounceSearch(){
+    clearTimeout(searchTimer);
+    searchTimer=setTimeout(function(){loadVoters(1)},300);
+  }
+
+  async function loadVoters(page){
+    currentPage=page||1;
+    currentSearch=document.getElementById('dptSearch').value.trim();
+    currentKelas=document.getElementById('dptFilterKelas').value;
+
+    try{
+      var res=await AdminAPI.voters.search({search:currentSearch,kelas:currentKelas,page:currentPage,limit:20});
+      var list=res.data||[];
+      var pag=res.pagination||{page:1,total:0,totalPages:1};
+      var kelasOpts=res.kelas_options||[];
+
+      // Update filter dropdown
+      var sel=document.getElementById('dptFilterKelas');
+      var curVal=sel.value;
+      sel.innerHTML='<option value="">Semua Kelas</option>';
+      kelasOpts.forEach(function(k){
+        var opt=document.createElement('option');
+        opt.value=k;opt.textContent=k;
+        if(k===curVal)opt.selected=true;
+        sel.appendChild(opt);
+      });
+
+      renderTable(list);
+      renderPagination(pag);
+    }catch(e){
+      document.getElementById('dptBody').innerHTML='<tr><td colspan="6" class="dpt-empty">Gagal memuat data</td></tr>';
+    }
+  }
+
+  function renderTable(list){
+    var tb=document.getElementById('dptBody');
+    if(!list.length){tb.innerHTML='<tr><td colspan="6" class="dpt-empty">Tidak ada data pemilih</td></tr>';return}
+    tb.innerHTML=list.map(function(v){
+      var cls=v.is_voted?'badge-voted':'badge-not';
+      var txt=v.is_voted?'Sudah Memilih':'Belum Memilih';
+      var resetBtn=v.is_voted?'<button class="btn-reset" onclick="VoterUI.resetVote('+v.id+',\''+esc(v.full_name).replace(/'/g,"\\'")+'\')">Reset</button>':'';
+      return '<tr>'+
+        '<td>'+esc(v.identifier)+'</td>'+
+        '<td>'+esc(v.full_name)+'</td>'+
+        '<td>'+esc(v.kelas||'\u2014')+'</td>'+
+        '<td><span class="badge '+cls+'">'+txt+'</span></td>'+
+        '<td>'+fmtDate(v.voted_at)+'</td>'+
+        '<td>'+resetBtn+'<button class="btn-del-sm" onclick="VoterUI.del('+v.id+',\''+esc(v.full_name).replace(/'/g,"\\'")+'\')">Hapus</button></td>'+
+      '</tr>';
+    }).join('');
+  }
+
+  function renderPagination(pag){
+    var el=document.getElementById('pagination');
+    if(pag.totalPages<=1){el.innerHTML='';return}
+    var html='';
+    html+='<button '+(pag.page<=1?'disabled':'')+' onclick="loadVoters('+(pag.page-1)+')">&laquo; Prev</button>';
+    html+='<span class="page-info">Hal '+pag.page+' / '+pag.totalPages+' ('+pag.total+' data)</span>';
+    html+='<button '+(pag.page>=pag.totalPages?'disabled':'')+' onclick="loadVoters('+(pag.page+1)+')">Next &raquo;</button>';
+    el.innerHTML=html;
+  }
+
+  var VoterUI={
+    open:function(){
+      document.getElementById('voterModal').classList.add('show');
+      document.getElementById('voterIdentifier').value='';
+      document.getElementById('voterFullName').value='';
+      document.getElementById('voterKelas').value='';
+    },
+    close:function(){document.getElementById('voterModal').classList.remove('show')},
+    del:async function(id,name){
+      if(!confirm('Hapus pemilih "'+name+'"?'))return;
+      try{await AdminAPI.voters.del(id);toast('Pemilih berhasil dihapus');loadVoters(currentPage)}catch(e){toast(e.message,'err')}
+    },
+    resetVote:async function(id,name){
+      if(!confirm('Reset status vote "'+name+'"?'))return;
+      try{await AdminAPI.voters.reset(id);toast('Status vote berhasil direset');loadVoters(currentPage)}catch(e){toast(e.message,'err')}
+    },
+    save:async function(){
+      var identifier=document.getElementById('voterIdentifier').value.trim();
+      var full_name=document.getElementById('voterFullName').value.trim();
+      var kelas=document.getElementById('voterKelas').value.trim();
+      if(!identifier||!full_name){toast('NIS/NISN dan Nama wajib diisi','err');return}
+      try{
+        await AdminAPI.voters.add({identifier:identifier,full_name:full_name,kelas:kelas||null});
+        toast('Pemilih berhasil ditambahkan');
+        this.close();loadVoters(1);
+      }catch(e){toast(e.message,'err')}
+    }
+  };
+
+  document.querySelectorAll('.modal-bg').forEach(function(el){el.addEventListener('click',function(e){if(e.target===el)el.classList.remove('show')})});
+  loadVoters(1);
+</script>
+</body>
+</html>

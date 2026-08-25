@@ -65,13 +65,21 @@ async function testConnection() {
         setting_value VARCHAR(50) NOT NULL,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )
-    `);
-    // Ensure default voting_status row exists
-    await conn.execute(`
-      INSERT IGNORE INTO voting_settings (setting_key, setting_value)
-      VALUES ('voting_status', 'Belum Dimulai')
-    `);
+    `);    // Ensure default voting_status row exists
+    await conn.execute(
+      `INSERT IGNORE INTO voting_settings (setting_key, setting_value)
+       VALUES ('voting_status', 'Belum Dimulai')`
+    );
     console.log('✅ Table "voting_settings" is ready');
+
+    // Auto-add kelas column to voters table if missing
+    try {
+      await conn.execute(`ALTER TABLE voters ADD COLUMN kelas VARCHAR(50) DEFAULT NULL AFTER full_name`);
+      console.log('✅ Column "kelas" added to voters table');
+    } catch (e) {
+      // Column already exists — ignore duplicate column error
+      if (e.errno !== 1060) throw e;
+    }
 
     conn.release();
   } catch (err) {
@@ -270,7 +278,7 @@ app.get('/api/quick-count', async (req, res) => {
     const [voterStats] = await pool.execute(
       `SELECT COUNT(*) AS total_voters,
               SUM(is_voted = 1) AS voted_count
-       FROM voters`
+       FROM voters WHERE role = 'voter'`
     );
 
     const totalVotesCast = candidates.reduce((sum, c) => sum + (c.vote_count || 0), 0);
@@ -293,12 +301,12 @@ app.get('/api/quick-count', async (req, res) => {
 // ============================================
 app.get('/api/admin/stats', async (req, res) => {
   try {
-    // Statistik pemilih dari tabel voters (single query)
+    // Statistik pemilih dari tabel voters — exclude admin accounts
     const [voterStats] = await pool.execute(
       `SELECT COUNT(*) AS total_voters,
               SUM(is_voted = 1) AS voted_count,
               SUM(is_voted = 0) AS unvoted_count
-       FROM voters`
+       FROM voters WHERE role = 'voter'`
     );
     const totalVoters = voterStats[0].total_voters;
     const totalVoted = voterStats[0].voted_count || 0;
@@ -417,13 +425,57 @@ app.delete('/api/admin/candidates/:id', async (req, res) => {
 // API - Voters Management
 // ============================================
 
-// GET - All voters
+// GET - All voters (with search, filter kelas, pagination)
 app.get('/api/admin/voters', async (req, res) => {
   try {
-    const [rows] = await pool.execute(
-      'SELECT id, identifier, full_name, role, is_voted, voted_at, created_at FROM voters ORDER BY created_at DESC'
+    const search = req.query.search || '';
+    const kelas  = req.query.kelas || '';
+    const page   = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit  = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+    const offset = (page - 1) * limit;
+
+    let where = "WHERE role = 'voter'";
+    const params = [];
+
+    if (search) {
+      where += ' AND (identifier LIKE ? OR full_name LIKE ?)';
+      params.push(`%${search}%`, `%${search}%`);
+    }
+
+    if (kelas) {
+      where += ' AND kelas = ?';
+      params.push(kelas);
+    }
+
+    const [countRows] = await pool.execute(
+      `SELECT COUNT(*) AS total FROM voters ${where}`,
+      params
     );
-    res.json(rows);
+    const total = countRows[0].total;
+
+    const [rows] = await pool.execute(
+      `SELECT id, identifier, full_name, kelas, role, is_voted, voted_at, created_at
+       FROM voters ${where}
+       ORDER BY created_at DESC
+       LIMIT ${limit} OFFSET ${offset}`,
+      params
+    );
+
+    // Get distinct kelas values for filter dropdown
+    const [kelasRows] = await pool.execute(
+      "SELECT DISTINCT kelas FROM voters WHERE kelas IS NOT NULL AND kelas != '' AND role = 'voter' ORDER BY kelas"
+    );
+
+    res.json({
+      data: rows,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+      kelas_options: kelasRows.map(r => r.kelas),
+    });
   } catch (err) {
     console.error('Get voters error:', err);
     res.status(500).json({ error: 'Gagal mengambil data pemilih' });
@@ -433,15 +485,15 @@ app.get('/api/admin/voters', async (req, res) => {
 // POST - Add voter
 app.post('/api/admin/voters', async (req, res) => {
   try {
-    const { identifier, full_name, role } = req.body;
+    const { identifier, full_name, role, kelas } = req.body;
 
     if (!identifier || !full_name) {
       return res.status(400).json({ error: 'Identifier dan Nama harus diisi' });
     }
 
     const [result] = await pool.execute(
-      'INSERT INTO voters (identifier, full_name, role) VALUES (?, ?, ?)',
-      [identifier, full_name, role || 'voter']
+      'INSERT INTO voters (identifier, full_name, role, kelas) VALUES (?, ?, ?, ?)',
+      [identifier, full_name, role || 'voter', kelas || null]
     );
 
     res.status(201).json({

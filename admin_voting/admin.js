@@ -71,11 +71,25 @@ const AdminAPI = {
     async del(id) { return apiFetch(`/api/admin/candidates/${id}`, { method: 'DELETE' }); },
   },
 
-  // ── Voters CRUD + Reset ──
+  // ── Voters CRUD + Reset + Search ──
   voters: {
     async list()  { return apiFetch('/api/admin/voters'); },
+    async search(params) {
+      const qs = new URLSearchParams();
+      if (params.search) qs.set('search', params.search);
+      if (params.kelas)  qs.set('kelas', params.kelas);
+      if (params.page)   qs.set('page', params.page);
+      if (params.limit)  qs.set('limit', params.limit);
+      return apiFetch('/api/admin/voters?' + qs.toString());
+    },
     async add(b)  { return apiFetch('/api/admin/voters', { method: 'POST', body: JSON.stringify(b) }); },
     async del(id) { return apiFetch(`/api/admin/voters/${id}`, { method: 'DELETE' }); },
     async reset(id) { return apiFetch(`/api/admin/voters/${id}/reset`, { method: 'PUT' }); },
+  },
+
+  // ── Voting Status ──
+  votingStatus: {
+    async get()    { return apiFetch('/api/admin/voting-status'); },
+    async set(s)   { return apiFetch('/api/admin/voting-status', { method: 'POST', body: JSON.stringify({ voting_status: s }) }); },
   },
 };

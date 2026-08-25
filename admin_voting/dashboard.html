@@ -8,349 +8,108 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
     :root {
-      --bg:       #0f172a;
-      --sidebar:  #1e293b;
-      --card:     #1e293b;
-      --border:   #334155;
-      --text:     #e2e8f0;
-      --text-dim: #94a3b8;
-      --text-mute:#64748b;
-      --accent:   #818cf8;
-      --accent2:  #6366f1;
-      --green:    #34d399;
-      --green-bg: rgba(52,211,153,.12);
-      --orange:   #fb923c;
-      --orange-bg:rgba(251,146,60,.12);
-      --red:      #f87171;
-      --red-bg:   rgba(248,113,113,.12);
-      --glass:    rgba(30,41,59,.75);
-      --glass-border: rgba(51,65,85,.6);
+      --bg:#0f172a; --sidebar:#1e293b; --card:#1e293b; --border:#334155;
+      --text:#e2e8f0; --text-dim:#94a3b8; --text-mute:#64748b;
+      --accent:#818cf8; --accent2:#6366f1; --green:#34d399; --green-bg:rgba(52,211,153,.12);
+      --orange:#fb923c; --orange-bg:rgba(251,146,60,.12); --red:#f87171; --red-bg:rgba(248,113,113,.12);
+      --glass:rgba(30,41,59,.75); --glass-border:rgba(51,65,85,.6);
     }
+    html{font-size:14px} body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;overflow-x:hidden}
 
-    html { font-size: 14px; }
-    body {
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background: var(--bg); color: var(--text);
-      display: flex; min-height: 100vh; overflow-x: hidden;
-    }
+    .sidebar{position:fixed;top:0;left:0;width:260px;height:100vh;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:50;transition:transform .3s}
+    .sb-head{padding:24px 22px 20px;border-bottom:1px solid var(--border)}
+    .sb-logo{font-size:16px;font-weight:700;letter-spacing:-.3px;background:linear-gradient(135deg,var(--accent),#a78bfa);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px}
+    .sb-sub{font-size:11px;color:var(--text-mute);letter-spacing:.5px}
+    .sb-status{display:flex;align-items:center;gap:8px;padding:14px 22px;border-bottom:1px solid var(--border)}
+    .sb-status .dot{width:8px;height:8px;background:var(--green);border-radius:50%;box-shadow:0 0 8px rgba(52,211,153,.5)}
+    .sb-status span{font-size:12px;color:var(--text-dim)}
+    .sb-nav{flex:1;padding:12px 10px;display:flex;flex-direction:column;gap:2px}
+    .sb-nav a{display:flex;align-items:center;gap:12px;padding:11px 16px;font-size:13px;font-weight:500;font-family:inherit;color:var(--text-dim);background:transparent;border:none;border-radius:10px;cursor:pointer;transition:all .15s;text-decoration:none;width:100%}
+    .sb-nav a:hover{background:rgba(99,102,241,.08);color:var(--text)}
+    .sb-nav a.active{background:rgba(99,102,241,.12);color:var(--accent)}
+    .sb-nav a .icon{font-size:18px;width:22px;text-align:center}
+    .sb-foot{padding:16px 22px;border-top:1px solid var(--border)}
+    .btn-logout{display:flex;align-items:center;gap:10px;width:100%;padding:10px 16px;font-size:12px;font-weight:600;font-family:inherit;letter-spacing:.5px;text-transform:uppercase;color:var(--red);background:var(--red-bg);border:1px solid rgba(248,113,113,.2);border-radius:10px;cursor:pointer;transition:all .15s}
+    .btn-logout:hover{background:rgba(248,113,113,.2)}
 
-    /* ── SIDEBAR ── */
-    .sidebar {
-      position: fixed; top: 0; left: 0; width: 260px; height: 100vh;
-      background: var(--sidebar); border-right: 1px solid var(--border);
-      display: flex; flex-direction: column; z-index: 50;
-      transition: transform .3s;
-    }
-    .sb-head { padding: 24px 22px 20px; border-bottom: 1px solid var(--border); }
-    .sb-logo {
-      font-size: 16px; font-weight: 700; letter-spacing: -0.3px;
-      background: linear-gradient(135deg, var(--accent), #a78bfa);
-      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-      margin-bottom: 4px;
-    }
-    .sb-sub { font-size: 11px; color: var(--text-mute); letter-spacing: .5px; }
-    .sb-status {
-      display: flex; align-items: center; gap: 8px;
-      padding: 14px 22px; border-bottom: 1px solid var(--border);
-    }
-    .sb-status .dot {
-      width: 8px; height: 8px; background: var(--green);
-      border-radius: 50%; box-shadow: 0 0 8px rgba(52,211,153,.5);
-    }
-    .sb-status span { font-size: 12px; color: var(--text-dim); }
-    .sb-nav { flex: 1; padding: 12px 10px; display: flex; flex-direction: column; gap: 2px; }
-    .sb-nav button {
-      display: flex; align-items: center; gap: 12px;
-      padding: 11px 16px; font-size: 13px; font-weight: 500; font-family: inherit;
-      color: var(--text-dim); background: transparent; border: none;
-      border-radius: 10px; cursor: pointer; transition: all .15s;
-      text-align: left; width: 100%;
-    }
-    .sb-nav button:hover { background: rgba(99,102,241,.08); color: var(--text); }
-    .sb-nav button.active { background: rgba(99,102,241,.12); color: var(--accent); }
-    .sb-nav button .icon { font-size: 18px; width: 22px; text-align: center; }
-    .sb-foot { padding: 16px 22px; border-top: 1px solid var(--border); }
-    .btn-logout {
-      display: flex; align-items: center; gap: 10px;
-      width: 100%; padding: 10px 16px; font-size: 12px; font-weight: 600;
-      font-family: inherit; letter-spacing: .5px; text-transform: uppercase;
-      color: var(--red); background: var(--red-bg); border: 1px solid rgba(248,113,113,.2);
-      border-radius: 10px; cursor: pointer; transition: all .15s;
-    }
-    .btn-logout:hover { background: rgba(248,113,113,.2); }
+    .main{margin-left:260px;flex:1;min-height:100vh}
+    .top-bar{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;padding:16px 28px;background:rgba(15,23,42,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+    .top-bar h2{font-size:17px;font-weight:700;letter-spacing:-.2px}
+    .clock{font-size:12px;color:var(--text-mute);font-variant-numeric:tabular-nums}
+    .content{padding:24px 28px 40px}
 
-    /* ── MAIN ── */
-    .main { margin-left: 260px; flex: 1; min-height: 100vh; }
-    .top-bar {
-      position: sticky; top: 0; z-index: 40;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 16px 28px;
-      background: rgba(15,23,42,.85); backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-    }
-    .top-bar h2 { font-size: 17px; font-weight: 700; letter-spacing: -0.2px; }
-    .clock { font-size: 12px; color: var(--text-mute); font-variant-numeric: tabular-nums; }
-    .content { padding: 24px 28px 40px; }
+    .sec-title{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-mute);margin-bottom:14px}
 
-    /* ── STAT CARDS ── */
-    .stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 24px; }
-    .stat {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: 14px; padding: 22px 24px; transition: border-color .2s;
-    }
-    .stat:hover { border-color: #475569; }
-    .stat .s-label {
-      font-size: 10px; font-weight: 600; letter-spacing: 1.5px;
-      text-transform: uppercase; color: var(--text-mute); margin-bottom: 10px;
-    }
-    .stat .s-value { font-size: 32px; font-weight: 700; letter-spacing: -1px; line-height: 1; }
-    .stat .s-sub { font-size: 11px; color: var(--text-mute); margin-top: 6px; }
+    .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:24px}
+    .stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px 24px;transition:border-color .2s}
+    .stat:hover{border-color:#475569}
+    .stat .s-label{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-mute);margin-bottom:10px}
+    .stat .s-value{font-size:32px;font-weight:700;letter-spacing:-1px;line-height:1}
+    .stat .s-sub{font-size:11px;color:var(--text-mute);margin-top:6px}
 
-    /* ── SECTIONS ── */
-    .section { display: none; }
-    .section.active { display: block; animation: fadeUp .3s ease; }
-    @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-    .sec-title {
-      font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
-      text-transform: uppercase; color: var(--text-mute); margin-bottom: 14px;
-    }
+    .status-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px 24px;margin-bottom:24px}
+    .status-row{display:flex;align-items:center;justify-content:space-between}
+    .status-label{font-size:13px;color:var(--text-dim)}
+    .status-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;letter-spacing:.5px}
+    .status-badge .dot{width:8px;height:8px;border-radius:50%}
+    .status-belum{background:rgba(100,116,139,.15);color:var(--text-mute)}
+    .status-belum .dot{background:var(--text-mute)}
+    .status-berlangsung{background:var(--green-bg);color:var(--green)}
+    .status-berlangsung .dot{background:var(--green);box-shadow:0 0 8px rgba(52,211,153,.5)}
+    .status-ditutup{background:var(--red-bg);color:var(--red)}
+    .status-ditutup .dot{background:var(--red)}
 
-    /* ── QUICK COUNT ── */
-    .qc-card {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: 14px; padding: 24px; margin-bottom: 24px;
-    }
-    .qc-card .qc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-    .qc-card .qc-head .sec-title { margin: 0; }
-    .qc-card .qc-head .qc-total { font-size: 12px; color: var(--text-dim); }
-    .qc-row { margin-bottom: 16px; }
-    .qc-row:last-child { margin-bottom: 0; }
-    .qc-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-    .qc-meta .qc-name { font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
-    .qc-meta .qc-name .num {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 24px; height: 24px; font-size: 11px; font-weight: 700;
-      background: rgba(99,102,241,.15); color: var(--accent); border-radius: 6px;
-    }
-    .qc-meta .qc-count { font-size: 13px; font-weight: 600; color: var(--text-dim); }
-    .qc-track { width: 100%; height: 10px; background: rgba(51,65,85,.5); border-radius: 20px; overflow: hidden; }
-    .qc-fill {
-      height: 100%; border-radius: 20px;
-      background: linear-gradient(90deg, var(--accent2), var(--accent));
-      transition: width .8s cubic-bezier(.22,1,.36,1);
-    }
-    .qc-pct { font-size: 11px; color: var(--text-mute); margin-top: 4px; text-align: right; }
-    .qc-empty { text-align: center; padding: 40px; color: var(--text-mute); font-size: 13px; }
+    .quick-links{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:24px}
+    .quick-link{display:flex;align-items:center;gap:14px;padding:20px 24px;background:var(--card);border:1px solid var(--border);border-radius:14px;text-decoration:none;color:var(--text);transition:all .2s}
+    .quick-link:hover{border-color:var(--accent);transform:translateY(-2px)}
+    .quick-link .ql-icon{font-size:28px;width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:rgba(99,102,241,.1);border-radius:12px}
+    .quick-link .ql-text h3{font-size:14px;font-weight:600;margin-bottom:2px}
+    .quick-link .ql-text p{font-size:11px;color:var(--text-mute)}
 
-    /* ── PASLON GRID ── */
-    .paslon-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-    .paslon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
-    .paslon-card {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: 14px; overflow: hidden; transition: border-color .2s;
-    }
-    .paslon-card:hover { border-color: #475569; }
-    .paslon-photo {
-      width: 100%; height: 200px; object-fit: cover;
-      background: linear-gradient(135deg, rgba(99,102,241,.15), rgba(168,85,247,.1));
-      display: flex; align-items: center; justify-content: center;
-      font-size: 48px; color: var(--text-mute);
-    }
-    .paslon-photo img { width: 100%; height: 100%; object-fit: cover; }
-    .paslon-body { padding: 18px 20px; }
-    .paslon-num {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 32px; height: 32px; font-size: 14px; font-weight: 700;
-      background: rgba(99,102,241,.15); color: var(--accent); border-radius: 8px; margin-bottom: 10px;
-    }
-    .paslon-name { font-size: 16px; font-weight: 700; margin-bottom: 10px; }
-    .paslon-visi, .paslon-misi {
-      font-size: 12px; color: var(--text-dim); line-height: 1.6; margin-bottom: 8px;
-      display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
-    }
-    .paslon-visi strong, .paslon-misi strong { color: var(--text-mute); font-weight: 600; }
-    .paslon-votes {
-      font-size: 12px; color: var(--accent); font-weight: 600; margin-top: 4px;
-    }
-    .paslon-actions { display: flex; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--border); }
-    .paslon-actions button {
-      flex: 1; padding: 8px; font-size: 11px; font-weight: 600; font-family: inherit;
-      letter-spacing: .5px; text-transform: uppercase; border-radius: 8px;
-      cursor: pointer; transition: all .15s;
-    }
-    .btn-edit { background: rgba(99,102,241,.1); color: var(--accent); border: 1px solid rgba(99,102,241,.25); }
-    .btn-edit:hover { background: rgba(99,102,241,.2); }
-    .btn-del { background: var(--red-bg); color: var(--red); border: 1px solid rgba(248,113,113,.2); }
-    .btn-del:hover { background: rgba(248,113,113,.2); }
-    .paslon-empty { grid-column: 1/-1; text-align: center; padding: 48px; color: var(--text-mute); font-size: 13px; }
+    .qc-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-top:24px}
+    .qc-card .qc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+    .qc-row{margin-bottom:16px}
+    .qc-row:last-child{margin-bottom:0}
+    .qc-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+    .qc-meta .qc-name{font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px}
+    .qc-meta .qc-name .num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;font-size:11px;font-weight:700;background:rgba(99,102,241,.15);color:var(--accent);border-radius:6px}
+    .qc-meta .qc-count{font-size:13px;font-weight:600;color:var(--text-dim)}
+    .qc-track{width:100%;height:10px;background:rgba(51,65,85,.5);border-radius:20px;overflow:hidden}
+    .qc-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .8s cubic-bezier(.22,1,.36,1)}
+    .qc-pct{font-size:11px;color:var(--text-mute);margin-top:4px;text-align:right}
+    .qc-empty{text-align:center;padding:40px;color:var(--text-mute);font-size:13px}
 
-    /* ── DPT TABLE ── */
-    .dpt-toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
-    .search-box { flex: 1; min-width: 200px; position: relative; }
-    .search-box input {
-      width: 100%; padding: 10px 14px 10px 38px; font-size: 13px; font-family: inherit;
-      background: var(--card); color: var(--text); border: 1px solid var(--border);
-      border-radius: 10px; outline: none; transition: border-color .2s;
-    }
-    .search-box input:focus { border-color: var(--accent); }
-    .search-box::before {
-      content: '\\1F50D'; position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
-      font-size: 13px; pointer-events: none;
-    }
-    .dpt-table-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
-    .dpt-table-card table { width: 100%; border-collapse: collapse; }
-    .dpt-table-card thead th {
-      padding: 12px 16px; font-size: 10px; font-weight: 600; letter-spacing: 1.2px;
-      text-transform: uppercase; color: var(--text-mute); text-align: left;
-      border-bottom: 1px solid var(--border); background: rgba(15,23,42,.4);
-    }
-    .dpt-table-card tbody td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid rgba(51,65,85,.3); }
-    .dpt-table-card tbody tr:last-child td { border-bottom: none; }
-    .dpt-table-card tbody tr:hover { background: rgba(99,102,241,.04); }
-    .badge {
-      display: inline-flex; align-items: center; gap: 5px;
-      padding: 4px 10px; font-size: 10px; font-weight: 600;
-      letter-spacing: .5px; text-transform: uppercase; border-radius: 20px;
-    }
-    .badge-voted { background: var(--green-bg); color: var(--green); }
-    .badge-not { background: var(--orange-bg); color: var(--orange); }
-    .badge-role {
-      display: inline-block; padding: 3px 8px; font-size: 9px; font-weight: 600;
-      letter-spacing: .5px; text-transform: uppercase; border-radius: 4px;
-      background: rgba(99,102,241,.12); color: var(--accent); margin-left: 6px;
-    }
-    .btn-reset {
-      padding: 6px 12px; font-size: 10px; font-weight: 600; font-family: inherit;
-      letter-spacing: .5px; text-transform: uppercase; border-radius: 6px;
-      background: rgba(251,146,60,.1); color: var(--orange);
-      border: 1px solid rgba(251,146,60,.2); cursor: pointer; transition: all .15s;
-    }
-    .btn-reset:hover { background: rgba(251,146,60,.2); }
-    .btn-add-voter {
-      padding: 10px 18px; font-size: 11px; font-weight: 600; font-family: inherit;
-      letter-spacing: .5px; text-transform: uppercase; border-radius: 10px;
-      background: linear-gradient(135deg, var(--accent2), var(--accent));
-      color: #fff; border: none; cursor: pointer; transition: opacity .2s;
-    }
-    .btn-add-voter:hover { opacity: .85; }
-    .dpt-empty { text-align: center; padding: 40px; color: var(--text-mute); font-size: 13px; }
+    .toast{position:fixed;bottom:24px;right:24px;z-index:300;padding:12px 22px;font-size:13px;font-weight:500;color:#fff;border-radius:10px;transform:translateY(100px);opacity:0;transition:all .3s}
+    .toast.show{transform:translateY(0);opacity:1}
+    .toast.ok{background:rgba(52,211,153,.85)}
+    .toast.err{background:rgba(248,113,113,.85)}
 
-    /* ── GLASSMORPHISM MODAL ── */
-    .modal-bg {
-      display: none; position: fixed; inset: 0; z-index: 200;
-      background: rgba(0,0,0,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
-      align-items: center; justify-content: center;
-    }
-    .modal-bg.show { display: flex; }
-    .modal {
-      background: var(--glass); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-      border: 1px solid var(--glass-border); border-radius: 18px;
-      width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,.5); animation: modalIn .25s ease;
-    }
-    @keyframes modalIn { from { opacity:0; transform:scale(.95) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
-    .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid var(--border); }
-    .modal-head h2 { font-size: 16px; font-weight: 700; }
-    .btn-x {
-      width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
-      font-size: 18px; color: var(--text-mute); background: rgba(51,65,85,.3);
-      border: none; border-radius: 8px; cursor: pointer; transition: all .15s;
-    }
-    .btn-x:hover { background: rgba(51,65,85,.5); color: var(--text); }
-    .modal-body { padding: 24px; }
-    .modal-foot { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 24px; border-top: 1px solid var(--border); }
-    .fg { margin-bottom: 16px; }
-    .fg label {
-      display: block; font-size: 10px; font-weight: 600; letter-spacing: 1px;
-      text-transform: uppercase; color: var(--text-mute); margin-bottom: 6px;
-    }
-    .fg input, .fg textarea, .fg select {
-      width: 100%; padding: 11px 14px; font-size: 13px; font-family: inherit;
-      background: rgba(15,23,42,.5); color: var(--text);
-      border: 1px solid var(--border); border-radius: 10px; outline: none; transition: border-color .2s;
-    }
-    .fg input:focus, .fg textarea:focus, .fg select:focus { border-color: var(--accent); }
-    .fg textarea { min-height: 72px; resize: vertical; }
-    .fg input::placeholder, .fg textarea::placeholder { color: #475569; }
-    .btn-cancel {
-      padding: 10px 18px; font-size: 11px; font-weight: 600; font-family: inherit;
-      letter-spacing: .5px; text-transform: uppercase; border-radius: 10px;
-      background: transparent; border: 1px solid var(--border); color: var(--text-dim);
-      cursor: pointer; transition: all .15s;
-    }
-    .btn-cancel:hover { border-color: #475569; color: var(--text); }
-    .btn-save {
-      padding: 10px 24px; font-size: 11px; font-weight: 600; font-family: inherit;
-      letter-spacing: .5px; text-transform: uppercase; border-radius: 10px;
-      background: linear-gradient(135deg, var(--accent2), var(--accent));
-      color: #fff; border: none; cursor: pointer; transition: opacity .2s;
-    }
-    .btn-save:hover { opacity: .85; }
-
-    /* ── TOAST ── */
-    .toast {
-      position: fixed; bottom: 24px; right: 24px; z-index: 300;
-      padding: 12px 22px; font-size: 13px; font-weight: 500; color: #fff;
-      border-radius: 10px; transform: translateY(100px); opacity: 0; transition: all .3s;
-    }
-    .toast.show { transform: translateY(0); opacity: 1; }
-    .toast.ok { background: rgba(52,211,153,.85); }
-    .toast.err { background: rgba(248,113,113,.85); }
-
-    @media (max-width: 768px) {
-      .sidebar { transform: translateX(-100%); }
-      .sidebar.open { transform: translateX(0); }
-      .main { margin-left: 0; }
-      .stats { grid-template-columns: 1fr; }
-      .paslon-grid { grid-template-columns: 1fr; }
-    }
+    @media(max-width:768px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0}.stats,.quick-links{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
 
-<!-- ═══ SIDEBAR ═══ -->
 <aside class="sidebar" id="sidebar">
-  <div class="sb-head">
-    <div class="sb-logo">E-Election OSIS</div>
-    <div class="sb-sub">Admin Dashboard</div>
-  </div>
-  <div class="sb-status">
-    <div class="dot"></div>
-    <span>Admin Active</span>
-  </div>
+  <div class="sb-head"><div class="sb-logo">E-Election OSIS</div><div class="sb-sub">Admin Dashboard</div></div>
+  <div class="sb-status"><div class="dot"></div><span>Admin Active</span></div>
   <nav class="sb-nav">
-    <button class="active" data-section="dashboard" onclick="switchSection('dashboard',this)">
-      <span class="icon">&#x1F4CA;</span> Dashboard
-    </button>
-    <button data-section="quickcount" onclick="switchSection('quickcount',this)">
-      <span class="icon">&#x1F5F3;</span> Quick Count
-    </button>
-    <button data-section="paslon" onclick="switchSection('paslon',this)">
-      <span class="icon">&#x1F464;</span> Data Paslon
-    </button>
-    <button data-section="dpt" onclick="switchSection('dpt',this)">
-      <span class="icon">&#x1F4CB;</span> Data DPT
-    </button>
+    <a class="active" href="/admin/dashboard.html"><span class="icon">&#x1F4CA;</span> Dashboard</a>
+    <a href="/admin/paslon.html"><span class="icon">&#x1F464;</span> Data Paslon</a>
+    <a href="/admin/dpt.html"><span class="icon">&#x1F4CB;</span> Data DPT</a>
   </nav>
-  <div class="sb-foot">
-    <button class="btn-logout" onclick="AdminAPI.logout()">
-      <span>&#x1F6AA;</span> Keluar
-    </button>
-  </div>
+  <div class="sb-foot"><button class="btn-logout" onclick="AdminAPI.logout()"><span>&#x1F6AA;</span> Keluar</button></div>
 </aside>
 
-<!-- ═══ MAIN CONTENT ═══ -->
 <div class="main">
   <div class="top-bar">
-    <h2 id="pageTitle">Dashboard</h2>
+    <h2>Dashboard</h2>
     <div class="clock" id="clock"></div>
   </div>
-
   <div class="content">
-    <!-- STATS (always visible) -->
-    <div class="stats" id="statsRow">
+
+    <!-- STAT CARDS -->
+    <div class="stats">
       <div class="stat">
         <div class="s-label">Total DPT</div>
         <div class="s-value" id="sTotal">&mdash;</div>
@@ -366,453 +125,130 @@
         <div class="s-value" id="sNotVoted">&mdash;</div>
         <div class="s-sub" id="sNotVotedPct">&mdash;%</div>
       </div>
+      <div class="stat">
+        <div class="s-label">Partisipasi</div>
+        <div class="s-value" id="sParticipation">&mdash;%</div>
+        <div class="s-sub">Persentase partisipasi pemilihan</div>
+      </div>
     </div>
 
-    <!-- ═══ DASHBOARD ═══ -->
-    <div class="section active" id="sec-dashboard">
-      <div class="sec-title">Ringkasan Singkat</div>
-      <div class="qc-card" style="margin-top:12px">
-        <div class="qc-head">
-          <span class="sec-title">Perolehan Suara Terkini</span>
-          <span class="qc-total" id="qcTotalSummary">&mdash;</span>
+    <!-- VOTING STATUS -->
+    <div class="status-card">
+      <div class="status-row">
+        <span class="status-label">Status Pemilihan</span>
+        <span class="status-badge" id="votingStatusBadge">
+          <span class="dot"></span>
+          <span id="votingStatusText">Memuat...</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- QUICK LINKS -->
+    <div class="sec-title">Akses Cepat</div>
+    <div class="quick-links">
+      <a class="quick-link" href="/admin/paslon.html">
+        <div class="ql-icon">&#x1F464;</div>
+        <div class="ql-text">
+          <h3>Data Paslon</h3>
+          <p>Kelola pasangan calon ketua & wakil</p>
         </div>
-        <div id="qcDash"><div class="qc-empty">Memuat data&hellip;</div></div>
-      </div>
-    </div>
-
-    <!-- ═══ QUICK COUNT ═══ -->
-    <div class="section" id="sec-quickcount">
-      <div class="qc-card">
-        <div class="qc-head">
-          <span class="sec-title">Quick Count &mdash; Perolehan Suara Real-Time</span>
-          <span class="qc-total" id="qcTotalDetail">&mdash;</span>
+      </a>
+      <a class="quick-link" href="/admin/dpt.html">
+        <div class="ql-icon">&#x1F4CB;</div>
+        <div class="ql-text">
+          <h3>Data DPT</h3>
+          <p>Kelola daftar pemilih tetap</p>
         </div>
-        <div id="qcDetail"><div class="qc-empty">Memuat data&hellip;</div></div>
-      </div>
+      </a>
     </div>
 
-    <!-- ═══ DATA PASLON ═══ -->
-    <div class="section" id="sec-paslon">
-      <div class="paslon-toolbar">
-        <span class="sec-title">Manajemen Pasangan Calon</span>
-        <button class="btn-add-voter" onclick="CandUI.open()">+ Tambah Paslon</button>
+    <!-- QUICK COUNT PREVIEW -->
+    <div class="qc-card" id="qcCard" style="display:none">
+      <div class="qc-head">
+        <span class="sec-title">Perolehan Suara</span>
+        <span id="qcTotal">&mdash;</span>
       </div>
-      <div class="paslon-grid" id="paslonGrid">
-        <div class="paslon-empty">Memuat data&hellip;</div>
-      </div>
-    </div>
-
-    <!-- ═══ DATA DPT ═══ -->
-    <div class="section" id="sec-dpt">
-      <div class="dpt-toolbar">
-        <div class="search-box">
-          <input type="text" id="dptSearch" placeholder="Cari Identifier atau Nama&hellip;" oninput="filterDPT()">
-        </div>
-        <button class="btn-add-voter" onclick="VoterUI.open()">+ Tambah Pemilih</button>
-      </div>
-      <div class="dpt-table-card">
-        <table>
-          <thead><tr><th>Identifier</th><th>Nama</th><th>Role</th><th>Status</th><th>Waktu Memilih</th><th>Aksi</th></tr></thead>
-          <tbody id="dptBody"><tr><td colspan="6" class="dpt-empty">Memuat data&hellip;</td></tr></tbody>
-        </table>
-      </div>
+      <div id="qcBody"><div class="qc-empty">Memuat data&hellip;</div></div>
     </div>
   </div>
 </div>
 
-<!-- ═══ MODAL: CANDIDATE ═══ -->
-<div class="modal-bg" id="candModal">
-  <div class="modal">
-    <div class="modal-head">
-      <h2 id="candModalTitle">Tambah Paslon</h2>
-      <button class="btn-x" onclick="CandUI.close()">&times;</button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="candId">
-      <div class="fg"><label>Nama Kandidat</label><input type="text" id="candName" placeholder="Nama lengkap kandidat"></div>
-      <div class="fg"><label>Visi</label><textarea id="candVision" placeholder="Tuliskan visi kandidat"></textarea></div>
-      <div class="fg"><label>Misi</label><textarea id="candMission" placeholder="Tuliskan misi kandidat"></textarea></div>
-      <div class="fg"><label>Photo URL <span style="color:#475569">(opsional)</span></label><input type="text" id="candPhoto" placeholder="https://..."></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn-cancel" onclick="CandUI.close()">Batal</button>
-      <button class="btn-save" onclick="CandUI.save()">Simpan</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══ MODAL: VOTER ═══ -->
-<div class="modal-bg" id="voterModal">
-  <div class="modal">
-    <div class="modal-head">
-      <h2>Tambah Pemilih</h2>
-      <button class="btn-x" onclick="VoterUI.close()">&times;</button>
-    </div>
-    <div class="modal-body">
-      <div class="fg"><label>Identifier (NIM / Token)</label><input type="text" id="voterIdentifier" placeholder="Masukkan identifier"></div>
-      <div class="fg"><label>Nama Lengkap</label><input type="text" id="voterFullName" placeholder="Nama lengkap"></div>
-      <div class="fg">
-        <label>Role</label>
-        <select id="voterRole">
-          <option value="voter">Voter</option>
-          <option value="admin">Admin</option>
-        </select>
-      </div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn-cancel" onclick="VoterUI.close()">Batal</button>
-      <button class="btn-save" onclick="VoterUI.save()">Simpan</button>
-    </div>
-  </div>
-</div>
-
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script src="admin.js"></script>
 <script>
-  /* ──────────────────────────────────────────
-     AUTH GATE
-     ────────────────────────────────────────── */
   var admin = JSON.parse(localStorage.getItem('admin') || 'null');
   if (!admin) location.href = '/admin/login.html';
 
-  /* ──────────────────────────────────────────
-     UTILITIES
-     ────────────────────────────────────────── */
-  function esc(s) {
-    if (!s) return '';
-    var d = document.createElement('div');
-    d.textContent = s;
-    return d.innerHTML;
-  }
+  function esc(s){if(!s)return'';var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+  function toast(msg,type){type=type||'ok';var t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+type;setTimeout(function(){t.className='toast'},3000)}
+  function setEl(id,val){var el=document.getElementById(id);if(el)el.textContent=val}
+  function updateClock(){var now=new Date();setEl('clock',now.toLocaleDateString('id-ID',{weekday:'long',day:'2-digit',month:'long',year:'numeric'})+' \u2022 '+now.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'}))}
+  updateClock();setInterval(updateClock,1000);
 
-  function fmtDate(d) {
-    if (!d) return '\u2014';
-    try {
-      return new Date(d).toLocaleString('id-ID', {
-        day: '2-digit', month: 'short', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-      });
-    } catch(e) { return '\u2014'; }
-  }
+  async function loadStats(){
+    try{
+      var d=await AdminAPI.stats();
+      var tv=d.total_voters||0;
+      var tvoted=d.total_voted||0;
+      var tnot=d.total_not_voted||0;
+      var pct=tv>0?((tvoted/tv)*100).toFixed(1):'0.0';
 
-  function setEl(id, val) {
-    var el = document.getElementById(id);
-    if (el) el.textContent = val;
-  }
+      setEl('sTotal',tv);
+      setEl('sVoted',tvoted);
+      setEl('sNotVoted',tnot);
+      setEl('sParticipation',pct+'%');
+      setEl('sVotedPct',tv>0?((tvoted/tv)*100).toFixed(1)+'% dari total':'0% dari total');
+      setEl('sNotVotedPct',tv>0?((tnot/tv)*100).toFixed(1)+'% dari total':'0% dari total');
 
-  function toast(msg, type) {
-    type = type || 'ok';
-    var t = document.getElementById('toast');
-    t.textContent = msg;
-    t.className = 'toast show ' + type;
-    setTimeout(function() { t.className = 'toast'; }, 3000);
-  }
-
-  /* ──────────────────────────────────────────
-     CLOCK
-     ────────────────────────────────────────── */
-  function updateClock() {
-    var now = new Date();
-    setEl('clock',
-      now.toLocaleDateString('id-ID', {weekday:'long',day:'2-digit',month:'long',year:'numeric'})
-      + '  \u2022  ' +
-      now.toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit',second:'2-digit'})
-    );
-  }
-  updateClock();
-  setInterval(updateClock, 1000);
-
-  /* ──────────────────────────────────────────
-     SECTION / TAB SWITCHING
-     ────────────────────────────────────────── */
-  var titles = {
-    dashboard: 'Dashboard',
-    quickcount: 'Quick Count',
-    paslon: 'Data Paslon',
-    dpt: 'Data DPT'
-  };
-
-  function switchSection(name, btn) {
-    var sections = document.querySelectorAll('.section');
-    for (var i = 0; i < sections.length; i++) sections[i].classList.remove('active');
-    var target = document.getElementById('sec-' + name);
-    if (target) target.classList.add('active');
-    var btns = document.querySelectorAll('.sb-nav button');
-    for (var j = 0; j < btns.length; j++) btns[j].classList.remove('active');
-    if (btn) btn.classList.add('active');
-    setEl('pageTitle', titles[name] || name);
-  }
-
-  /* ──────────────────────────────────────────
-     STATS + QUICK COUNT
-     ────────────────────────────────────────── */
-  async function loadStats() {
-    try {
-      var d = await AdminAPI.stats();
-
-      setEl('sTotal', d.total_voters);
-      setEl('sVoted', d.total_voted);
-      setEl('sNotVoted', d.total_not_voted);
-
-      var tv = d.total_voters || 1;
-      setEl('sVotedPct', ((d.total_voted / tv) * 100).toFixed(1) + '% dari total');
-      setEl('sNotVotedPct', ((d.total_not_voted / tv) * 100).toFixed(1) + '% dari total');
-
-      setEl('qcTotalSummary', d.total_votes_cast + ' suara masuk');
-      setEl('qcTotalDetail', d.total_votes_cast + ' suara masuk dari ' + d.total_voters + ' pemilih');
-
-      renderQC(d.candidates, d.total_voters, d.total_votes_cast);
-
-    } catch (err) {
-      console.warn('loadStats error:', err);
-      setEl('sTotal', '0');
-      setEl('sVoted', '0');
-      setEl('sNotVoted', '0');
-      setEl('sVotedPct', '0% dari total');
-      setEl('sNotVotedPct', '0% dari total');
-      setEl('qcTotalSummary', '0 suara masuk');
-      setEl('qcTotalDetail', 'Gagal memuat data quick count');
-      document.getElementById('qcDash').innerHTML = '<div class="qc-empty">Gagal memuat data &mdash; ' + esc(err.message) + '</div>';
-      document.getElementById('qcDetail').innerHTML = '<div class="qc-empty">Gagal memuat data &mdash; ' + esc(err.message) + '</div>';
+      // Quick count preview
+      if(d.candidates&&d.candidates.length){
+        document.getElementById('qcCard').style.display='block';
+        setEl('qcTotal',d.total_votes_cast+' suara masuk');
+        renderQC(d.candidates,d.total_votes_cast);
+      }
+    }catch(err){
+      console.warn('loadStats error:',err);
+      setEl('sTotal','0');setEl('sVoted','0');setEl('sNotVoted','0');setEl('sParticipation','0.0%');
     }
   }
 
-  /* candidates[] from API = { id, name, photo_url, vote_count } */
-  function renderQC(candidates, totalVoters, totalVotes) {
-    var htmlDash   = document.getElementById('qcDash');
-    var htmlDetail = document.getElementById('qcDetail');
-
-    if (!candidates || !candidates.length) {
-      var empty = '<div class="qc-empty">Belum ada kandidat terdaftar</div>';
-      htmlDash.innerHTML = empty;
-      htmlDetail.innerHTML = empty;
-      return;
-    }
-
-    var total = totalVotes || 1;
-    var maxVotes = 1;
-    for (var i = 0; i < candidates.length; i++) {
-      var vc = candidates[i].vote_count || 0;
-      if (vc > maxVotes) maxVotes = vc;
-    }
-
-    var rows = candidates.map(function(c) {
-      var vc = c.vote_count || 0;
-      var pct  = ((vc / total) * 100).toFixed(1);
-      var barW = maxVotes > 0 ? ((vc / maxVotes) * 100) : 0;
-      return '<div class="qc-row">' +
-        '<div class="qc-meta">' +
-          '<div class="qc-name"><span class="num">' + c.id + '</span> ' + esc(c.name) + '</div>' +
-          '<div class="qc-count">' + vc + ' suara</div>' +
-        '</div>' +
-        '<div class="qc-track"><div class="qc-fill" style="width:' + barW + '%"></div></div>' +
-        '<div class="qc-pct">' + pct + '%</div>' +
-      '</div>';
-    }).join('');
-
-    htmlDash.innerHTML = rows;
-    htmlDetail.innerHTML = rows;
-  }
-
-  /* ──────────────────────────────────────────
-     CANDIDATES
-     ────────────────────────────────────────── */
-  var candList = [];
-
-  async function loadCandidates() {
-    try {
-      candList = await AdminAPI.candidates.list();
-    } catch (err) {
-      console.warn('loadCandidates error:', err);
-      candList = [];
-    }
-
-    var grid = document.getElementById('paslonGrid');
-    if (!candList.length) {
-      grid.innerHTML = '<div class="paslon-empty">Belum ada kandidat terdaftar</div>';
-      return;
-    }
-
-    grid.innerHTML = candList.map(function(c) {
-      var photo = c.photo_url
-        ? '<img src="' + esc(c.photo_url) + '" alt="' + esc(c.name) + '" onerror="this.parentElement.textContent=\'\u2B1A\'">'
-        : '\u2B1A';
-      var vc = c.vote_count || 0;
-      return '<div class="paslon-card">' +
-        '<div class="paslon-photo">' + photo + '</div>' +
-        '<div class="paslon-body">' +
-          '<div class="paslon-num">' + c.id + '</div>' +
-          '<div class="paslon-name">' + esc(c.name) + '</div>' +
-          '<div class="paslon-visi"><strong>Visi: </strong>' + esc(c.vision) + '</div>' +
-          '<div class="paslon-misi"><strong>Misi: </strong>' + esc(c.mission) + '</div>' +
-          '<div class="paslon-votes">&#x1F5F3; ' + vc + ' suara</div>' +
-        '</div>' +
-        '<div class="paslon-actions">' +
-          '<button class="btn-edit" onclick="CandUI.edit(' + c.id + ')">Edit</button>' +
-          '<button class="btn-del" onclick="CandUI.del(' + c.id + ',\'' + esc(c.name).replace(/'/g,"\\'") + '\')">Hapus</button>' +
-        '</div>' +
-      '</div>';
+  function renderQC(candidates,totalVotes){
+    var el=document.getElementById('qcBody');
+    if(!candidates||!candidates.length){el.innerHTML='<div class="qc-empty">Belum ada kandidat</div>';return}
+    var total=totalVotes||1;
+    var maxV=1;
+    for(var i=0;i<candidates.length;i++){var vc=candidates[i].vote_count||0;if(vc>maxV)maxV=vc}
+    el.innerHTML=candidates.map(function(c){
+      var vc=c.vote_count||0;
+      var pct=((vc/total)*100).toFixed(1);
+      var barW=maxV>0?((vc/maxV)*100):0;
+      return '<div class="qc-row">'+
+        '<div class="qc-meta"><div class="qc-name"><span class="num">'+(c.candidate_number||c.id)+'</span> '+esc(c.chairman_name)+' & '+esc(c.vice_chairman_name)+'</div><div class="qc-count">'+vc+' suara</div></div>'+
+        '<div class="qc-track"><div class="qc-fill" style="width:'+barW+'%"></div></div>'+
+        '<div class="qc-pct">'+pct+'%</div></div>';
     }).join('');
   }
 
-  var CandUI = {
-    open: function(d) {
-      document.getElementById('candModal').classList.add('show');
-      document.getElementById('candModalTitle').textContent = d ? 'Edit Paslon' : 'Tambah Paslon';
-      document.getElementById('candId').value      = d ? d.id : '';
-      document.getElementById('candName').value    = d ? d.name : '';
-      document.getElementById('candVision').value  = d ? d.vision : '';
-      document.getElementById('candMission').value = d ? d.mission : '';
-      document.getElementById('candPhoto').value   = d && d.photo_url ? d.photo_url : '';
-    },
-    close: function() { document.getElementById('candModal').classList.remove('show'); },
-    edit: function(id) {
-      for (var i = 0; i < candList.length; i++) {
-        if (candList[i].id === id) { this.open(candList[i]); return; }
-      }
-    },
-    del: async function(id, name) {
-      if (!confirm('Hapus kandidat "' + name + '"?')) return;
-      try {
-        await AdminAPI.candidates.del(id);
-        toast('Kandidat berhasil dihapus');
-        loadCandidates();
-        loadStats();
-      } catch(e) { toast(e.message, 'err'); }
-    },
-    save: async function() {
-      var id   = document.getElementById('candId').value;
-      var name = document.getElementById('candName').value.trim();
-      var vis  = document.getElementById('candVision').value.trim();
-      var mis  = document.getElementById('candMission').value.trim();
-      var photo= document.getElementById('candPhoto').value.trim() || null;
-      if (!name || !vis || !mis) {
-        toast('Nama, Visi, dan Misi wajib diisi', 'err'); return;
-      }
-      var body = { name: name, vision: vis, mission: mis, photo_url: photo };
-      try {
-        if (id) await AdminAPI.candidates.update(id, body);
-        else    await AdminAPI.candidates.add(body);
-        toast(id ? 'Paslon berhasil diperbarui' : 'Paslon berhasil ditambahkan');
-        this.close();
-        loadCandidates();
-        loadStats();
-      } catch(e) { toast(e.message, 'err'); }
+  async function loadVotingStatus(){
+    try{
+      var d=await AdminAPI.votingStatus.get();
+      var s=d.voting_status||'Belum Dimulai';
+      var badge=document.getElementById('votingStatusBadge');
+      var txt=document.getElementById('votingStatusText');
+      txt.textContent=s;
+      badge.className='status-badge';
+      if(s==='Berlangsung')badge.className+=' status-berlangsung';
+      else if(s==='Ditutup')badge.className+=' status-ditutup';
+      else badge.className+=' status-belum';
+    }catch(e){
+      setEl('votingStatusText','Tidak diketahui');
     }
-  };
-
-  /* ──────────────────────────────────────────
-     DPT / VOTERS
-     ────────────────────────────────────────── */
-  var voterList = [];
-
-  async function loadVoters() {
-    try {
-      voterList = await AdminAPI.voters.list();
-    } catch (err) {
-      console.warn('loadVoters error:', err);
-      voterList = [];
-    }
-    renderDPT(voterList);
   }
 
-  function renderDPT(list) {
-    var tb = document.getElementById('dptBody');
-    if (!list.length) {
-      tb.innerHTML = '<tr><td colspan="6" class="dpt-empty">Belum ada pemilih terdaftar</td></tr>';
-      return;
-    }
-    tb.innerHTML = list.map(function(v) {
-      var cls  = v.is_voted ? 'badge-voted' : 'badge-not';
-      var txt  = v.is_voted ? 'Sudah Memilih' : 'Belum Memilih';
-      var time = fmtDate(v.voted_at);
-      var role = v.role ? '<span class="badge-role">' + esc(v.role) + '</span>' : '';
-      var resetBtn = v.is_voted
-        ? '<button class="btn-reset" onclick="VoterUI.resetVote(' + v.id + ',\'' + esc(v.full_name).replace(/'/g,"\\'") + '\')">Reset Vote</button>'
-        : '';
-      var delBtn = '<button class="btn-del" style="margin-left:6px;background:var(--red-bg);color:var(--red);border:1px solid rgba(248,113,113,.2);border-radius:6px;padding:6px 10px;font-size:10px;font-weight:600;font-family:inherit;letter-spacing:.5px;text-transform:uppercase;cursor:pointer" onclick="VoterUI.del(' + v.id + ',\'' + esc(v.full_name).replace(/'/g,"\\'") + '\')">Hapus</button>';
-      return '<tr>' +
-        '<td>' + esc(v.identifier) + '</td>' +
-        '<td>' + esc(v.full_name) + role + '</td>' +
-        '<td>' + esc(v.role || 'voter') + '</td>' +
-        '<td><span class="badge ' + cls + '">' + txt + '</span></td>' +
-        '<td>' + time + '</td>' +
-        '<td>' + resetBtn + delBtn + '</td>' +
-      '</tr>';
-    }).join('');
-  }
-
-  function filterDPT() {
-    var q = document.getElementById('dptSearch').value.toLowerCase();
-    var filtered = voterList.filter(function(v) {
-      return (v.identifier || '').toLowerCase().indexOf(q) !== -1 ||
-             (v.full_name || '').toLowerCase().indexOf(q) !== -1;
-    });
-    renderDPT(filtered);
-  }
-
-  var VoterUI = {
-    open: function() {
-      document.getElementById('voterModal').classList.add('show');
-      document.getElementById('voterIdentifier').value = '';
-      document.getElementById('voterFullName').value = '';
-      document.getElementById('voterRole').value = 'voter';
-    },
-    close: function() { document.getElementById('voterModal').classList.remove('show'); },
-    del: async function(id, name) {
-      if (!confirm('Hapus pemilih "' + name + '"?')) return;
-      try {
-        await AdminAPI.voters.del(id);
-        toast('Pemilih berhasil dihapus');
-        loadVoters();
-        loadStats();
-      } catch(e) { toast(e.message, 'err'); }
-    },
-    resetVote: async function(id, name) {
-      if (!confirm('Reset status vote "' + name + '"? Pemilih ini akan bisa memilih ulang.')) return;
-      try {
-        await AdminAPI.voters.reset(id);
-        toast('Status vote berhasil direset');
-        loadVoters();
-        loadStats();
-      } catch(e) { toast(e.message, 'err'); }
-    },
-    save: async function() {
-      var identifier = document.getElementById('voterIdentifier').value.trim();
-      var full_name  = document.getElementById('voterFullName').value.trim();
-      var role       = document.getElementById('voterRole').value;
-      if (!identifier || !full_name) {
-        toast('Identifier dan Nama wajib diisi', 'err'); return;
-      }
-      try {
-        await AdminAPI.voters.add({ identifier: identifier, full_name: full_name, role: role });
-        toast('Pemilih berhasil ditambahkan');
-        this.close();
-        loadVoters();
-        loadStats();
-      } catch(e) { toast(e.message, 'err'); }
-    }
-  };
-
-  /* ──────────────────────────────────────────
-     MODAL OVERLAY CLOSE
-     ────────────────────────────────────────── */
-  document.querySelectorAll('.modal-bg').forEach(function(el) {
-    el.addEventListener('click', function(e) {
-      if (e.target === el) el.classList.remove('show');
-    });
-  });
-
-  /* ──────────────────────────────────────────
-     AUTO-REFRESH + INITIAL LOAD
-     ────────────────────────────────────────── */
-  setInterval(loadStats, 15000);
-
+  setInterval(loadStats,15000);
   loadStats();
-  loadCandidates();
-  loadVoters();
+  loadVotingStatus();
 </script>
 </body>
 </html>

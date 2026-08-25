@@ -45,6 +45,18 @@ async function testConnection() {
   try {
     const conn = await pool.getConnection();
     console.log('✅ Database connected successfully');
+
+    // Auto-create admin table if it does not exist
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS admin (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(100) NOT NULL UNIQUE,
+        password VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('✅ Table "admin" is ready');
+
     conn.release();
   } catch (err) {
     console.error('❌ Database connection failed:', err.message);
@@ -148,6 +160,7 @@ app.post('/api/register', async (req, res) => {
   } catch (err) {
     console.error('Register error:', err.message || err);
     console.error('Full error details:', err);
+    console.error(err);
     res.status(500).json({ message: 'Terjadi kesalahan server' });
   }
 });

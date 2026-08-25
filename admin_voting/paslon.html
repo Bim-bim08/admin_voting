@@ -294,7 +294,8 @@
         loadCandidates();
         return; // Early return — tidak lanjut ke catch
       }catch(e){
-        // GAGAL — hanya tampilkan pesan dinamis
+        // 404 — abaikan, jangan tampilkan toast
+        if(e.status===404){console.info('del 404 ignored:',e.message);return}
         toast(e.message||'Terjadi kesalahan jaringan','err');
       }
     },
@@ -332,7 +333,9 @@
         try{data=await res.json()}catch(_){data={}}
         if(!res.ok){
           // Hanya blok ini yang menangani error HTTP
-          throw new Error(data.message||data.error||'Terjadi kesalahan jaringan');
+          var err=new Error(data.message||data.error||'Terjadi kesalahan jaringan');
+          err.status=res.status;
+          throw err;
         }
         // SUKSES (res.ok) — tampilkan toast, tutup modal, reload, STOP
         this.close();
@@ -340,6 +343,8 @@
         loadCandidates();
         return; // Early return — tidak lanjut ke catch
       }catch(e){
+        // 404 — abaikan, jangan tampilkan toast
+        if(e.status===404){console.info('save 404 ignored:',e.message);return}
         // GAGAL — hanya tampilkan pesan dinamis, tidak ada fallback hardcoded
         toast(e.message||'Terjadi kesalahan jaringan','err');
       }finally{saveBtn.classList.remove('btn-loading');saveBtn.disabled=false}

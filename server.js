@@ -94,7 +94,7 @@ app.post('/api/admin/login', async (req, res) => {
     }
 
     const [rows] = await pool.execute(
-      'SELECT id, username, password FROM admins WHERE username = ?',
+      'SELECT id, username, password FROM admin WHERE username = ?',
       [username]
     );
 
@@ -139,9 +139,19 @@ app.post('/api/register', async (req, res) => {
       return res.status(400).json({ message: 'Password minimal 6 karakter' });
     }
 
+    // Ensure admin table exists before inserting
+    await pool.execute(`
+      CREATE TABLE IF NOT EXISTS admin (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(100) NOT NULL UNIQUE,
+        password VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Check if username already exists
     const [existing] = await pool.execute(
-      'SELECT id FROM admins WHERE username = ?',
+      'SELECT id FROM admin WHERE username = ?',
       [username]
     );
 
@@ -152,16 +162,14 @@ app.post('/api/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
     await pool.execute(
-      'INSERT INTO admins (username, password) VALUES (?, ?)',
+      'INSERT INTO admin (username, password) VALUES (?, ?)',
       [username, hashedPassword]
     );
 
     res.status(201).json({ success: true, message: 'Registrasi berhasil' });
   } catch (err) {
-    console.error('Register error:', err.message || err);
-    console.error('Full error details:', err);
-    console.error(err);
-    res.status(500).json({ message: 'Terjadi kesalahan server' });
+    console.error('REGISTER ERROR:', err);
+    res.status(500).json({ message: err.message });
   }
 });
 

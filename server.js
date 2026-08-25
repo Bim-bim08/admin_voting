@@ -642,10 +642,10 @@ app.post('/api/vote', async (req, res) => {
 
 // ============================================
 // API - Public Candidates CRUD (for Admin Web)
-// GET /api/candidates         — list all candidates
-// POST /api/candidates        — add new candidate
-// PUT /api/candidates/:id     — edit candidate by ID
-// DELETE /api/candidates/:id  — delete candidate by ID
+// GET    /api/candidates       — list all candidates
+// POST   /api/candidates       — add new candidate (body: {candidate_number, chairman_name, ...})
+// PUT    /api/candidates       — edit candidate (body: {id, chairman_name, ...})
+// DELETE /api/candidates?id=X  — delete candidate by ID (query param)
 // ============================================
 app.options('/api/candidates', (req, res) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -698,11 +698,14 @@ app.post('/api/candidates', async (req, res) => {
   }
 });
 
-// PUT — edit candidate by ID
-app.put('/api/candidates/:id', async (req, res) => {
+// PUT — edit candidate by ID (id from body)
+app.put('/api/candidates', async (req, res) => {
   try {
-    const { id } = req.params;
-    const { candidate_number, chairman_name, vice_chairman_name, vision, mission, photo } = req.body;
+    const { id, candidate_number, chairman_name, vice_chairman_name, vision, mission, photo } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ success: false, message: 'ID kandidat harus diisi' });
+    }
 
     if (!chairman_name || !vice_chairman_name) {
       return res.status(400).json({ success: false, message: 'Nama ketua dan wakil ketua harus diisi' });
@@ -724,10 +727,15 @@ app.put('/api/candidates/:id', async (req, res) => {
   }
 });
 
-// DELETE — delete candidate by ID
-app.delete('/api/candidates/:id', async (req, res) => {
+// DELETE — delete candidate by ID (id from query ?id=)
+app.delete('/api/candidates', async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = req.query.id;
+
+    if (!id) {
+      return res.status(400).json({ success: false, message: 'ID kandidat harus diisi' });
+    }
+
     const [result] = await pool.execute('DELETE FROM candidates WHERE id = ?', [id]);
 
     if (result.affectedRows === 0) {

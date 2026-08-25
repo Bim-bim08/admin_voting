@@ -69,16 +69,16 @@ const AdminAPI = {
   candidates: {
     async list()  { return apiFetch('/api/candidates'); },
     async add(b)  { return apiFetch('/api/candidates', { method: 'POST', body: JSON.stringify(b) }); },
-    async update(id, b) { return apiFetch(`/api/candidates/${id}`, { method: 'PUT', body: JSON.stringify(b) }); },
-    async del(id) { return apiFetch(`/api/candidates/${id}`, { method: 'DELETE' }); },
+    async update(id, b) { return apiFetch('/api/candidates', { method: 'PUT', body: JSON.stringify({ ...b, id }) }); },
+    async del(id) { return apiFetch(`/api/candidates?id=${id}`, { method: 'DELETE' }); },
   },
 
   // ── Alias: paslon → candidates (same table, different naming) ──
   paslon: {
     async list()  { return apiFetch('/api/candidates'); },
     async add(b)  { return apiFetch('/api/candidates', { method: 'POST', body: JSON.stringify(b) }); },
-    async update(id, b) { return apiFetch(`/api/candidates/${id}`, { method: 'PUT', body: JSON.stringify(b) }); },
-    async del(id) { return apiFetch(`/api/candidates/${id}`, { method: 'DELETE' }); },
+    async update(id, b) { return apiFetch('/api/candidates', { method: 'PUT', body: JSON.stringify({ ...b, id }) }); },
+    async del(id) { return apiFetch(`/api/candidates?id=${id}`, { method: 'DELETE' }); },
   },
 
   // ── Voters CRUD + Reset + Search ──
@@ -112,8 +112,8 @@ const AdminAPI = {
   publicCandidates: {
     async list()     { return apiFetch('/api/candidates'); },
     async add(b)     { return apiFetch('/api/candidates', { method: 'POST', body: JSON.stringify(b) }); },
-    async update(id, b) { return apiFetch(`/api/candidates/${id}`, { method: 'PUT', body: JSON.stringify(b) }); },
-    async del(id)    { return apiFetch(`/api/candidates/${id}`, { method: 'DELETE' }); },
+    async update(id, b) { return apiFetch('/api/candidates', { method: 'PUT', body: JSON.stringify({ ...b, id }) }); },
+    async del(id)    { return apiFetch(`/api/candidates?id=${id}`, { method: 'DELETE' }); },
   },
 
   // ── Public Stats API (for Dashboard) ──

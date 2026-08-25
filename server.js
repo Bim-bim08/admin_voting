@@ -72,19 +72,7 @@ async function testConnection() {
     );
     console.log('✅ Table "voting_settings" is ready');
 
-    // Auto-create paslon table if it does not exist
-    await conn.execute(`
-      CREATE TABLE IF NOT EXISTS paslon (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        nomor_urut INT NOT NULL,
-        nama_ketua VARCHAR(150) NOT NULL,
-        nama_wakil VARCHAR(150),
-        visi TEXT,
-        misi TEXT,
-        foto TEXT
-      )
-    `);
-    console.log('✅ Table "paslon" is ready');
+
 
     // Auto-add kelas column to voters table if missing
     try {
@@ -296,7 +284,7 @@ app.get('/api/quick-count', async (req, res) => {
 
     const [candidates] = await pool.execute(
       `SELECT id, candidate_number, chairman_name, vice_chairman_name,
-              vision_mission, photo_url, vote_count
+              vision, mission, COALESCE(votes, 0) AS votes, photo
        FROM candidates ORDER BY candidate_number ASC`
     );
 
@@ -306,7 +294,7 @@ app.get('/api/quick-count', async (req, res) => {
        FROM voters WHERE role = 'voter'`
     );
 
-    const totalVotesCast = candidates.reduce((sum, c) => sum + (c.vote_count || 0), 0);
+    const totalVotesCast = candidates.reduce((sum, c) => sum + (c.votes || 0), 0);
 
     res.json({
       voting_status: status,
@@ -339,12 +327,12 @@ app.get('/api/admin/stats', async (req, res) => {
 
     // Perolehan suara langsung dari tabel candidates (no votes table)
     const [candidateVotes] = await pool.execute(
-      `SELECT id, candidate_number, CONCAT(chairman_name, ' & ', vice_chairman_name) AS name, vote_count
+      `SELECT id, candidate_number, CONCAT(chairman_name, ' & ', vice_chairman_name) AS name, COALESCE(votes, 0) AS votes
        FROM candidates ORDER BY candidate_number ASC`
     );
 
-    // Total votes cast — sum of all candidates' vote_count
-    const totalVotesCast = candidateVotes.reduce((sum, c) => sum + (c.vote_count || 0), 0);
+    // Total votes cast — sum of all candidates' votes
+    const totalVotesCast = candidateVotes.reduce((sum, c) => sum + (c.votes || 0), 0);
 
     res.json({
       total_voters: totalVoters,
@@ -368,7 +356,7 @@ app.get('/api/admin/candidates', async (req, res) => {
   try {
     const [rows] = await pool.execute(
       `SELECT id, candidate_number, chairman_name, vice_chairman_name,
-              vision_mission, photo_url, vote_count
+              vision, mission, COALESCE(votes, 0) AS votes, photo
        FROM candidates ORDER BY candidate_number ASC`
     );
     res.json(rows);
@@ -381,15 +369,15 @@ app.get('/api/admin/candidates', async (req, res) => {
 // POST - Add candidate
 app.post('/api/admin/candidates', async (req, res) => {
   try {
-    const { chairman_name, vice_chairman_name, vision_mission, photo_url } = req.body;
+    const { candidate_number, chairman_name, vice_chairman_name, vision, mission, photo } = req.body;
 
-    if (!chairman_name || !vice_chairman_name || !vision_mission) {
-      return res.status(400).json({ error: 'Nama ketua, wakil ketua, dan visi-misi harus diisi' });
+    if (!chairman_name || !vice_chairman_name) {
+      return res.status(400).json({ error: 'Nama ketua dan wakil ketua harus diisi' });
     }
 
     const [result] = await pool.execute(
-      'INSERT INTO candidates (chairman_name, vice_chairman_name, vision_mission, photo_url) VALUES (?, ?, ?, ?)',
-      [chairman_name, vice_chairman_name, vision_mission, photo_url || null]
+      'INSERT INTO candidates (candidate_number, chairman_name, vice_chairman_name, vision, mission, photo) VALUES (?, ?, ?, ?, ?, ?)',
+      [candidate_number || null, chairman_name, vice_chairman_name, vision || null, mission || null, photo || null]
     );
 
     res.status(201).json({
@@ -407,15 +395,15 @@ app.post('/api/admin/candidates', async (req, res) => {
 app.put('/api/admin/candidates/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { chairman_name, vice_chairman_name, vision_mission, photo_url } = req.body;
+    const { candidate_number, chairman_name, vice_chairman_name, vision, mission, photo } = req.body;
 
-    if (!chairman_name || !vice_chairman_name || !vision_mission) {
-      return res.status(400).json({ error: 'Nama ketua, wakil ketua, dan visi-misi harus diisi' });
+    if (!chairman_name || !vice_chairman_name) {
+      return res.status(400).json({ error: 'Nama ketua dan wakil ketua harus diisi' });
     }
 
     const [result] = await pool.execute(
-      'UPDATE candidates SET chairman_name = ?, vice_chairman_name = ?, vision_mission = ?, photo_url = ? WHERE id = ?',
-      [chairman_name, vice_chairman_name, vision_mission, photo_url || null, id]
+      'UPDATE candidates SET candidate_number = ?, chairman_name = ?, vice_chairman_name = ?, vision = ?, mission = ?, photo = ? WHERE id = ?',
+      [candidate_number || null, chairman_name, vice_chairman_name, vision || null, mission || null, photo || null, id]
     );
 
     if (result.affectedRows === 0) {
@@ -446,114 +434,7 @@ app.delete('/api/admin/candidates/:id', async (req, res) => {
   }
 });
 
-// ============================================
-// API - CRUD Paslon (new table: paslon)
-// ============================================
 
-// Auto-create paslon table on startup
-async function ensurePaslonTable() {
-  try {
-    await pool.execute(`
-      CREATE TABLE IF NOT EXISTS paslon (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        nomor_urut INT NOT NULL,
-        nama_ketua VARCHAR(150) NOT NULL,
-        nama_wakil VARCHAR(150),
-        visi TEXT,
-        misi TEXT,
-        foto TEXT
-      )
-    `);
-    console.log('✅ Table "paslon" is ready');
-  } catch (err) {
-    console.error('⚠️  Failed to create paslon table:', err.message);
-  }
-}
-
-// GET all paslon
-app.get('/api/paslon', async (req, res) => {
-  try {
-    await ensurePaslonTable();
-    const [rows] = await pool.execute(
-      'SELECT id, nomor_urut, nama_ketua, nama_wakil, visi, misi, foto FROM paslon ORDER BY nomor_urut ASC'
-    );
-    res.json(rows);
-  } catch (err) {
-    console.error('GET PASLON ERROR:', err);
-    res.status(500).json({ error: 'Gagal mengambil data paslon' });
-  }
-});
-
-// POST - Add paslon
-app.post('/api/paslon', async (req, res) => {
-  try {
-    await ensurePaslonTable();
-    const { nomor_urut, nama_ketua, nama_wakil, visi, misi, foto } = req.body;
-
-    if (!nomor_urut || !nama_ketua) {
-      return res.status(400).json({ error: 'Nomor urut dan nama ketua harus diisi' });
-    }
-
-    const [result] = await pool.execute(
-      'INSERT INTO paslon (nomor_urut, nama_ketua, nama_wakil, visi, misi, foto) VALUES (?, ?, ?, ?, ?, ?)',
-      [nomor_urut, nama_ketua, nama_wakil || null, visi || null, misi || null, foto || null]
-    );
-
-    res.status(201).json({
-      success: true,
-      message: 'Paslon berhasil ditambahkan',
-      id: result.insertId,
-    });
-  } catch (err) {
-    console.error('ADD PASLON ERROR:', err);
-    res.status(500).json({ error: 'Gagal menambahkan paslon' });
-  }
-});
-
-// PUT - Edit paslon
-app.put('/api/paslon/:id', async (req, res) => {
-  try {
-    await ensurePaslonTable();
-    const { id } = req.params;
-    const { nomor_urut, nama_ketua, nama_wakil, visi, misi, foto } = req.body;
-
-    if (!nomor_urut || !nama_ketua) {
-      return res.status(400).json({ error: 'Nomor urut dan nama ketua harus diisi' });
-    }
-
-    const [result] = await pool.execute(
-      'UPDATE paslon SET nomor_urut = ?, nama_ketua = ?, nama_wakil = ?, visi = ?, misi = ?, foto = ? WHERE id = ?',
-      [nomor_urut, nama_ketua, nama_wakil || null, visi || null, misi || null, foto || null, id]
-    );
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'Paslon tidak ditemukan' });
-    }
-
-    res.json({ success: true, message: 'Paslon berhasil diperbarui' });
-  } catch (err) {
-    console.error('UPDATE PASLON ERROR:', err);
-    res.status(500).json({ error: 'Gagal memperbarui paslon' });
-  }
-});
-
-// DELETE - Delete paslon
-app.delete('/api/paslon/:id', async (req, res) => {
-  try {
-    await ensurePaslonTable();
-    const { id } = req.params;
-    const [result] = await pool.execute('DELETE FROM paslon WHERE id = ?', [id]);
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'Paslon tidak ditemukan' });
-    }
-
-    res.json({ success: true, message: 'Paslon berhasil dihapus' });
-  } catch (err) {
-    console.error('DELETE PASLON ERROR:', err);
-    res.status(500).json({ error: 'Gagal menghapus paslon' });
-  }
-});
 
 // ============================================
 // API - Voters Management
@@ -735,9 +616,9 @@ app.post('/api/vote', async (req, res) => {
       return res.status(404).json({ error: 'Kandidat tidak ditemukan' });
     }
 
-    // Increment vote_count directly in candidates table (no votes table)
+    // Increment votes directly in candidates table (no votes table)
     await conn.execute(
-      'UPDATE candidates SET vote_count = vote_count + 1 WHERE id = ?',
+      'UPDATE candidates SET votes = votes + 1 WHERE id = ?',
       [candidate_id]
     );
 

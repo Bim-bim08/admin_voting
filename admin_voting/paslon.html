@@ -214,18 +214,20 @@
     try{candList=await AdminAPI.paslon.list()}catch(e){candList=[];toast('Gagal memuat data kandidat','err')}
     if(!candList.length){grid.innerHTML='<div class="paslon-empty">Belum ada kandidat terdaftar</div>';return}
     grid.innerHTML=candList.map(function(c){
-      var photo=c.foto?'<img src="'+esc(c.foto)+'" alt="'+esc(c.nama_ketua)+'" onerror="this.parentElement.textContent=\'\\u2B1A\'">':'\\u2B1A';
+      var photoUrl=c.photo||'';
+      var photo=photoUrl?'<img src="'+esc(photoUrl)+'" alt="'+esc(c.chairman_name)+'" onerror="this.src=\'/logo-osis.png\'">':'<img src="/logo-osis.png" alt="'+esc(c.chairman_name)+'">';
       return '<div class="paslon-card">'+
         '<div class="paslon-photo">'+photo+'</div>'+
         '<div class="paslon-body">'+
-          '<div class="paslon-num">'+(c.nomor_urut||c.id)+'</div>'+
-          '<div class="paslon-name">'+esc(c.nama_ketua)+' & '+esc(c.nama_wakil)+'</div>'+
-          '<div class="paslon-visi"><strong>Visi: </strong>'+esc(c.visi)+'</div>'+
-          '<div class="paslon-misi"><strong>Misi: </strong>'+esc(c.misi)+'</div>'+
+          '<div class="paslon-num">'+(c.candidate_number||c.id)+'</div>'+
+          '<div class="paslon-name">'+esc(c.chairman_name)+' & '+esc(c.vice_chairman_name)+'</div>'+
+          '<div class="paslon-visi"><strong>Visi: </strong>'+esc(c.vision)+'</div>'+
+          '<div class="paslon-misi"><strong>Misi: </strong>'+esc(c.mission)+'</div>'+
+          '<div class="paslon-votes">'+(c.votes||0)+' suara</div>'+
         '</div>'+
         '<div class="paslon-actions">'+
           '<button class="btn-edit" onclick="CandUI.edit('+c.id+')">Edit</button>'+
-          '<button class="btn-del" onclick="CandUI.del('+c.id+',\''+esc(c.nama_ketua).replace(/'/g,"\\'")+'\')">Hapus</button>'+
+          '<button class="btn-del" onclick="CandUI.del('+c.id+',\''+esc(c.chairman_name).replace(/'/g,"\\'")+'\')">Hapus</button>'+
         '</div>'+
       '</div>';
     }).join('');
@@ -236,12 +238,12 @@
       document.getElementById('candModal').classList.add('show');
       document.getElementById('candModalTitle').textContent=d?'Edit Paslon':'Tambah Paslon';
       document.getElementById('candId').value=d?d.id:'';
-      document.getElementById('candNumber').value=d?d.nomor_urut:'';
-      document.getElementById('candChairman').value=d?d.nama_ketua:'';
-      document.getElementById('candVice').value=d?d.nama_wakil:'';
-      document.getElementById('candVision').value=d?d.visi:'';
-      document.getElementById('candMission').value=d?d.misi:'';
-      document.getElementById('candPhoto').value=d&&d.foto?d.foto:'';
+      document.getElementById('candNumber').value=d?d.candidate_number:'';
+      document.getElementById('candChairman').value=d?d.chairman_name:'';
+      document.getElementById('candVice').value=d?d.vice_chairman_name:'';
+      document.getElementById('candVision').value=d?d.vision:'';
+      document.getElementById('candMission').value=d?d.mission:'';
+      document.getElementById('candPhoto').value=d&&d.photo?d.photo:'';
     },
     close:function(){document.getElementById('candModal').classList.remove('show')},
     edit:function(id){for(var i=0;i<candList.length;i++){if(candList[i].id===id){this.open(candList[i]);return}}},
@@ -259,7 +261,7 @@
       var misi=document.getElementById('candMission').value.trim();
       var foto=document.getElementById('candPhoto').value.trim()||null;
       if(!num||!namaKetua){toast('Nomor urut dan Nama Ketua wajib diisi','err');return}
-      var body={nomor_urut:parseInt(num),nama_ketua:namaKetua,nama_wakil:namaWakil||null,visi:visi||null,misi:misi||null,foto:foto};
+      var body={candidate_number:parseInt(num),chairman_name:namaKetua,vice_chairman_name:namaWakil||null,vision:visi||null,mission:misi||null,photo:foto};
       var saveBtn=document.querySelector('.modal-foot .btn-save');
       saveBtn.classList.add('btn-loading');saveBtn.disabled=true;
       try{

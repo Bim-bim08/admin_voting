@@ -282,9 +282,9 @@
     if(!candidates||!candidates.length){el.innerHTML='<div class="qc-empty">Belum ada kandidat</div>';return}
     var total=totalVotes||1;
     var maxV=1;
-    for(var i=0;i<candidates.length;i++){var vc=candidates[i].vote_count||0;if(vc>maxV)maxV=vc}
+    for(var i=0;i<candidates.length;i++){var vc=candidates[i].votes||0;if(vc>maxV)maxV=vc}
     el.innerHTML=candidates.map(function(c){
-      var vc=c.vote_count||0;
+      var vc=c.votes||0;
       var pct=((vc/total)*100).toFixed(1);
       var barW=maxV>0?((vc/maxV)*100):0;
       return '<div class="qc-row">'+

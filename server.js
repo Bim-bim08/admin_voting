@@ -54,7 +54,7 @@ async function testConnection() {
 // ROUTES - Landing
 // ============================================
 app.get('/', (req, res) => {
-  res.json({ message: 'E-Election OSIS API is running' });
+  res.sendFile(path.join(__dirname, 'public', 'admin', 'login.html'));
 });
 
 // Redirect /admin to login page

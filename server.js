@@ -100,6 +100,17 @@ app.get('/admin', (req, res) => {
   res.redirect(302, '/admin/login.html');
 });
 
+// Admin page routes — serve HTML files from admin_voting/
+app.get('/admin/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin_voting', 'dashboard.html'));
+});
+app.get('/admin/paslon', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin_voting', 'paslon.html'));
+});
+app.get('/admin/dpt', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin_voting', 'dpt.html'));
+});
+
 // Redirect /register to register page
 app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin', 'register.html'));
@@ -634,6 +645,18 @@ app.get('/admin/legacy-login', (req, res) => {
 
 app.get('/admin/legacy-dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin', 'dashboard.html'));
+});
+
+// ============================================
+// Wildcard catch-all — non-API routes fall back to login
+// ============================================
+app.get('*', (req, res) => {
+  // If the request is for an API path that wasn't matched, return 404 JSON
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ message: 'Endpoint tidak ditemukan' });
+  }
+  // Otherwise, redirect to login page
+  res.sendFile(path.join(__dirname, 'public', 'admin', 'login.html'));
 });
 
 // ============================================
